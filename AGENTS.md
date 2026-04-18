@@ -68,6 +68,12 @@ The system prioritizes:
 - maps code and flows
 - helps locate bugs
 
+### Tester
+- creates minimal unit tests
+- focuses on validation and regression risks
+- ensures critical branches are covered
+- avoids unnecessary test infrastructure
+
 ---
 
 ## Agent Routing Rules
@@ -79,6 +85,7 @@ Use the correct agent based on task complexity:
 - coder_fast → small, low-risk changes (1–3 files)
 - coder_deep → complex, high-risk, or workflow-sensitive changes
 - reviewer → validation after medium/high-risk changes
+- tester → add or review tests for medium/high-risk features
 
 ---
 

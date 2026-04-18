@@ -11,6 +11,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Session", "Session", "{10CF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lothal.FlowRecovery.Modules.Session", "src\Modules\Session\Lothal.FlowRecovery.Modules.Session\Lothal.FlowRecovery.Modules.Session.csproj", "{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lothal.FlowRecovery.Modules.Session.Tests", "tests\Lothal.FlowRecovery.Modules.Session.Tests\Lothal.FlowRecovery.Modules.Session.Tests.csproj", "{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,18 @@ Global
 		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Release|x64.Build.0 = Release|Any CPU
 		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Release|x86.ActiveCfg = Release|Any CPU
 		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Release|x86.Build.0 = Release|Any CPU
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}.Debug|x64.Build.0 = Debug|Any CPU
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}.Debug|x86.Build.0 = Debug|Any CPU
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}.Release|x64.ActiveCfg = Release|Any CPU
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}.Release|x64.Build.0 = Release|Any CPU
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}.Release|x86.ActiveCfg = Release|Any CPU
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -41,5 +57,6 @@ Global
 		{EC447DCF-ABFA-6E24-52A5-D7FD48A5C558} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{10CF2B88-4F33-6F2D-640D-45F055B3AE8F} = {EC447DCF-ABFA-6E24-52A5-D7FD48A5C558}
 		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205} = {10CF2B88-4F33-6F2D-640D-45F055B3AE8F}
+		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal
