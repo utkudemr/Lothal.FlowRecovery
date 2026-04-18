@@ -1,0 +1,5 @@
+model = "gpt-5.3-codex"
+approval_policy = "on-request"
+
+[projects."."]
+trust_level = "trusted"
