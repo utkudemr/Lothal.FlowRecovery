@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{EC447DCF-ABFA-6E24-52A5-D7FD48A5C558}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Session", "Session", "{10CF2B88-4F33-6F2D-640D-45F055B3AE8F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lothal.FlowRecovery.Modules.Session", "src\Modules\Session\Lothal.FlowRecovery.Modules.Session\Lothal.FlowRecovery.Modules.Session.csproj", "{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Debug|x64.Build.0 = Debug|Any CPU
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Debug|x86.Build.0 = Debug|Any CPU
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Release|x64.ActiveCfg = Release|Any CPU
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Release|x64.Build.0 = Release|Any CPU
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Release|x86.ActiveCfg = Release|Any CPU
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EC447DCF-ABFA-6E24-52A5-D7FD48A5C558} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{10CF2B88-4F33-6F2D-640D-45F055B3AE8F} = {EC447DCF-ABFA-6E24-52A5-D7FD48A5C558}
+		{3F4ACAB4-3728-4719-8BE7-C4BBECCA0205} = {10CF2B88-4F33-6F2D-640D-45F055B3AE8F}
+	EndGlobalSection
+EndGlobal
