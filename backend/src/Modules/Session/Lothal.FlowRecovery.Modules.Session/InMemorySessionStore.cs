@@ -20,4 +20,25 @@ internal sealed class InMemorySessionStore
             return true;
         }
     }
+
+    public bool TryGetSnapshot(Guid sessionId, out SessionSnapshot? snapshot)
+    {
+        lock (_sync)
+        {
+            if (!_sessions.TryGetValue(sessionId, out var session))
+            {
+                snapshot = null;
+                return false;
+            }
+
+            snapshot = new SessionSnapshot(
+                session.SessionId,
+                session.FlowId,
+                session.StartedBy,
+                session.Status,
+                session.StartedAtUtc,
+                session.Events.ToArray());
+            return true;
+        }
+    }
 }

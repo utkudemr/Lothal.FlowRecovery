@@ -14,4 +14,22 @@ public sealed class SessionModule
   {
     return _startSessionHandler.Handle(command);
   }
+
+  public SessionSnapshot? GetSession(Guid sessionId)
+  {
+    if (!SharedStore.TryGetSnapshot(sessionId, out var snapshot))
+    {
+      return null;
+    }
+
+    return snapshot;
+  }
 }
+
+public sealed record SessionSnapshot(
+  Guid SessionId,
+  string FlowId,
+  string StartedBy,
+  string Status,
+  DateTime StartedAtUtc,
+  IReadOnlyList<SessionEvent> Events);
