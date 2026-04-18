@@ -12,4 +12,9 @@ Rules:
 - Do not refactor unrelated code.
 - Use this agent for small endpoint, DTO, wiring, validation, and low-risk tasks.
 - Keep code simple and consistent with the repository architecture.
+- prefer existing repository patterns and naming before introducing new structure
+- do not add database or external dependencies
+- keep file changes small
+- avoid unnecessary abstractions
+- stay within module boundaries
 """

@@ -134,3 +134,15 @@ Use the correct agent based on task complexity:
 - Use planner_deep to clarify the task
 - Use explorer to understand the codebase
 - Ask for clarification instead of guessing
+
+## Global Constraints
+
+Unless explicitly stated otherwise:
+
+- do not introduce database or persistence layers
+- do not add external dependencies
+- keep implementations minimal
+- prefer small diffs and limited file scope
+- avoid unnecessary abstractions
+- stay within the current module scope
+- prefer extending existing files and structures before creating new ones

@@ -13,4 +13,9 @@ Rules:
 - avoid unnecessary test infrastructure
 - do not redesign production code unless required for basic testability
 - keep file scope narrow
+- prefer updating an existing test project instead of creating a new one
+- do not add database or external dependencies
+- keep file changes small
+- avoid unnecessary abstractions
+- stay within module boundaries
 """
