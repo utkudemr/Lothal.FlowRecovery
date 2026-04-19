@@ -4,15 +4,22 @@ public sealed class SessionModule
 {
   private static readonly InMemorySessionStore SharedStore = new();
   private readonly StartSessionHandler _startSessionHandler;
+  private readonly EndSessionHandler _endSessionHandler;
 
   public SessionModule()
   {
     _startSessionHandler = new StartSessionHandler(SharedStore);
+    _endSessionHandler = new EndSessionHandler(SharedStore);
   }
 
   public StartSessionResult StartSession(StartSessionCommand command)
   {
     return _startSessionHandler.Handle(command);
+  }
+
+  public EndSessionResult EndSession(EndSessionCommand command)
+  {
+    return _endSessionHandler.Handle(command);
   }
 
   public SessionSnapshot? GetSession(Guid sessionId)
@@ -32,4 +39,5 @@ public sealed record SessionSnapshot(
   string StartedBy,
   string Status,
   DateTime StartedAtUtc,
+  DateTime? EndedAtUtc,
   IReadOnlyList<SessionEvent> Events);

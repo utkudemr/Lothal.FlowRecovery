@@ -37,8 +37,56 @@ internal sealed class InMemorySessionStore
                 session.StartedBy,
                 session.Status,
                 session.StartedAtUtc,
+                session.EndedAtUtc,
                 session.Events.ToArray());
             return true;
+        }
+    }
+
+    public EndSessionOutcome TryEndSession(
+        Guid sessionId,
+        SessionEndMetadata endMetadata,
+        out SessionRecord? session)
+    {
+        lock (_sync)
+        {
+            SessionRecord? currentSession;
+            if (!_sessions.TryGetValue(sessionId, out currentSession))
+            {
+                session = null;
+                return EndSessionOutcome.NotFound;
+            }
+
+            session = currentSession;
+
+            if (session.Status == "Ended")
+            {
+                var auditOccurredAtUtc = DateTime.UtcNow;
+                if (session.EndedAtUtc.HasValue && auditOccurredAtUtc < session.EndedAtUtc.Value)
+                {
+                    auditOccurredAtUtc = session.EndedAtUtc.Value;
+                }
+
+                session.RecordAlreadyEndedAudit(endMetadata, auditOccurredAtUtc);
+                return EndSessionOutcome.AlreadyEnded;
+            }
+
+            if (session.Status != "Active")
+            {
+                session = null;
+                return EndSessionOutcome.NotFound;
+            }
+
+            var endedAtUtc = DateTime.UtcNow;
+            var ended = session.End(endMetadata, endedAtUtc);
+            if (ended &&
+                _activeSessionByFlowId.TryGetValue(session.FlowId, out var activeSessionId) &&
+                activeSessionId == session.SessionId)
+            {
+                _activeSessionByFlowId.Remove(session.FlowId);
+            }
+
+            return ended ? EndSessionOutcome.Ended : EndSessionOutcome.NotFound;
         }
     }
 }
