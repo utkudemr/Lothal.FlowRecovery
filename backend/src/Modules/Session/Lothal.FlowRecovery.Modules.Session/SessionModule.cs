@@ -4,17 +4,24 @@ public sealed class SessionModule
 {
   private static readonly InMemorySessionStore SharedStore = new();
   private readonly StartSessionHandler _startSessionHandler;
+  private readonly SetCurrentStepHandler _setCurrentStepHandler;
   private readonly EndSessionHandler _endSessionHandler;
 
   public SessionModule()
   {
     _startSessionHandler = new StartSessionHandler(SharedStore);
+    _setCurrentStepHandler = new SetCurrentStepHandler(SharedStore);
     _endSessionHandler = new EndSessionHandler(SharedStore);
   }
 
   public StartSessionResult StartSession(StartSessionCommand command)
   {
     return _startSessionHandler.Handle(command);
+  }
+
+  public SetCurrentStepResult SetCurrentStep(SetCurrentStepCommand command)
+  {
+    return _setCurrentStepHandler.Handle(command);
   }
 
   public EndSessionResult EndSession(EndSessionCommand command)
@@ -38,6 +45,7 @@ public sealed record SessionSnapshot(
   string FlowId,
   string StartedBy,
   string Status,
+  string? CurrentStep,
   DateTime StartedAtUtc,
   DateTime? EndedAtUtc,
   IReadOnlyList<SessionEvent> Events);

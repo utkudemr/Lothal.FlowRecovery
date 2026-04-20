@@ -36,10 +36,38 @@ internal sealed class InMemorySessionStore
                 session.FlowId,
                 session.StartedBy,
                 session.Status,
+                session.CurrentStep,
                 session.StartedAtUtc,
                 session.EndedAtUtc,
                 session.Events.ToArray());
             return true;
+        }
+    }
+
+    public SetCurrentStepOutcome TrySetCurrentStep(
+        Guid sessionId,
+        string currentStep,
+        string changedBy,
+        string actorType,
+        string? reason,
+        out SessionRecord? session)
+    {
+        lock (_sync)
+        {
+            if (!_sessions.TryGetValue(sessionId, out var currentSession))
+            {
+                session = null;
+                return SetCurrentStepOutcome.NotFound;
+            }
+
+            session = currentSession;
+            if (session.Status != "Active")
+            {
+                return SetCurrentStepOutcome.NotActive;
+            }
+
+            var changed = session.SetCurrentStep(currentStep, changedBy, actorType, reason, DateTime.UtcNow);
+            return changed ? SetCurrentStepOutcome.Changed : SetCurrentStepOutcome.Unchanged;
         }
     }
 
