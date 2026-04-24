@@ -15,5 +15,6 @@ Scope currently includes:
 
 Scope intentionally excludes:
 - database persistence
-- messaging or realtime integrations
+- messaging, transport, or realtime infrastructure
+- temporary in-Session event-to-notification boundary, which currently lives in Session and only supports `SessionCurrentStepSetEvent` for now
 - Basket, Workflow, and Operations module logic
