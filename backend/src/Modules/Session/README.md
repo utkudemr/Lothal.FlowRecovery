@@ -1,13 +1,19 @@
-# Session Module (Phase 1)
+# Session Module
 
-This phase contains only the minimal Session module project structure.
+This module provides an in-memory session workflow for recovery of stuck sales flows.
 
-Scope intentionally includes:
-- solution scaffold
-- Session class library
-- placeholder marker types
+It supports:
+- starting a session for a flow
+- updating the current step while the session is active
+- ending a session with operator/system metadata
+- reading session snapshots with append-only event history
+
+Scope currently includes:
+- command handlers and result types
+- session record, events, and audit metadata
+- shared in-memory session store
 
 Scope intentionally excludes:
-- Basket, Workflow, Operations, and Realtime modules
-- API host project
-- business logic, handlers, persistence, messaging, and workflow implementation
+- database persistence
+- messaging or realtime integrations
+- Basket, Workflow, and Operations module logic
