@@ -2,6 +2,7 @@
 
 ## Style
 The system is implemented as a modular monolith with microservice-friendly boundaries.
+Current implementation is session-module only and runs in-memory in a single process.
 
 ## Core Modules
 - Session: manages user sessions and current flow state
@@ -10,8 +11,16 @@ The system is implemented as a modular monolith with microservice-friendly bound
 - Operations: handles operator interventions
 - Realtime: delivers updates to mobile and admin clients
 
+## Session Model
+- commands: `StartSession`, `GetSession`, `EndSession`, `SetCurrentStep`
+- `GetSession` returns a snapshot read model
+- session events are append-only and preserved as audit history
+- `EndSession` is idempotent and records an audit event when already ended
+- `SetCurrentStep` is the current page or step control for an active session
+
 ## Data Strategy
-- PostgreSQL: source of truth
+- Current implementation: in-memory store only
+- Planned data strategy: PostgreSQL as source of truth
 - Redis: cache, locks, ephemeral state
 - NATS: event-driven communication
 - NoSQL (optional later): read models and audit projections
@@ -23,6 +32,12 @@ The system is implemented as a modular monolith with microservice-friendly bound
 - workflow history should be append-only
 - module coupling should stay minimal
 - write-side and read-side concerns should remain separable
+
+## Current Limits
+- in-memory only
+- single-process only
+- no persistence yet
+- no distributed consistency yet
 
 ## Evolution Strategy
 The system is designed to be split into microservices later if needed:
