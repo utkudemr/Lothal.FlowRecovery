@@ -44,6 +44,26 @@ internal sealed class InMemorySessionStore
         }
     }
 
+    public IReadOnlyList<SessionSnapshot> GetActiveSessions()
+    {
+        lock (_sync)
+        {
+            return _activeSessionByFlowId.Values
+                .Select(sessionId => _sessions[sessionId])
+                .Where(session => session.Status == "Active")
+                .Select(session => new SessionSnapshot(
+                    session.SessionId,
+                    session.FlowId,
+                    session.StartedBy,
+                    session.Status,
+                    session.CurrentStep,
+                    session.StartedAtUtc,
+                    session.EndedAtUtc,
+                    session.Events.ToArray()))
+                .ToArray();
+        }
+    }
+
     public SetCurrentStepOutcome TrySetCurrentStep(
         Guid sessionId,
         string currentStep,

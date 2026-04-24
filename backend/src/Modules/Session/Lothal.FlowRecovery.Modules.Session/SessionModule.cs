@@ -38,6 +38,11 @@ public sealed class SessionModule
 
     return snapshot;
   }
+
+  public IReadOnlyList<SessionSnapshot> ListActiveSessions()
+  {
+    return SharedStore.GetActiveSessions();
+  }
 }
 
 public sealed record SessionSnapshot(
