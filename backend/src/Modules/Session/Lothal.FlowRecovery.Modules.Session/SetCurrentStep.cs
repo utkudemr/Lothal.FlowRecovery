@@ -71,7 +71,14 @@ internal sealed class SetCurrentStepHandler
             reason = null;
         }
 
-        var outcome = _store.TrySetCurrentStep(command.SessionId, currentStep, changedBy, actorType, reason, out var session, out var stepSetEvent);
+        var outcome = _store.TrySetCurrentStep(
+            command.SessionId,
+            currentStep,
+            changedBy,
+            actorType,
+            reason,
+            out var session,
+            out var stepSetEvent);
         if (outcome == SetCurrentStepOutcome.NotFound)
         {
             return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "Session not found.", outcome, null);

@@ -129,6 +129,70 @@ public sealed class SessionRecord
         return true;
     }
 
+    public void RecordCurrentStepRejectedNotActive(
+        string currentStep,
+        string changedBy,
+        string actorType,
+        string? reason,
+        DateTime occurredAtUtc)
+    {
+        var normalizedRequestedStep = currentStep?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedRequestedStep))
+        {
+            throw new ArgumentException("Current step is required.", nameof(currentStep));
+        }
+
+        if (occurredAtUtc == default)
+        {
+            throw new ArgumentException("Current step timestamp is required.", nameof(occurredAtUtc));
+        }
+
+        if (occurredAtUtc < StartedAtUtc)
+        {
+            throw new ArgumentException("Current step timestamp cannot be earlier than the session start timestamp.", nameof(occurredAtUtc));
+        }
+
+        var normalizedChangedBy = changedBy?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedChangedBy))
+        {
+            throw new ArgumentException("ChangedBy is required.", nameof(changedBy));
+        }
+
+        var trimmedActorType = actorType?.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedActorType))
+        {
+            throw new ArgumentException("ActorType is required.", nameof(actorType));
+        }
+
+        var normalizedActorType = NormalizeActorType(trimmedActorType);
+        if (normalizedActorType is null)
+        {
+            throw new ArgumentException("ActorType is invalid.", nameof(actorType));
+        }
+
+        var normalizedReason = reason?.Trim();
+        if (string.IsNullOrWhiteSpace(normalizedReason))
+        {
+            normalizedReason = null;
+        }
+
+        if (EndedAtUtc.HasValue && occurredAtUtc < EndedAtUtc.Value)
+        {
+            occurredAtUtc = EndedAtUtc.Value;
+        }
+
+        _events.Add(new SessionCurrentStepRejectedNotActiveEvent(
+            SessionId,
+            FlowId,
+            CurrentStep,
+            normalizedRequestedStep,
+            normalizedChangedBy,
+            normalizedActorType,
+            normalizedReason,
+            Status,
+            occurredAtUtc));
+    }
+
     public bool End(SessionEndMetadata endMetadata, DateTime endedAtUtc)
     {
         if (Status == "Ended")
@@ -245,6 +309,17 @@ public sealed record SessionCurrentStepUnchangedEvent(
     string ActorType,
     string? Reason,
     string Outcome,
+    DateTime OccurredAtUtc) : SessionEvent(OccurredAtUtc);
+
+public sealed record SessionCurrentStepRejectedNotActiveEvent(
+    Guid SessionId,
+    string FlowId,
+    string? CurrentStep,
+    string RequestedStep,
+    string ChangedBy,
+    string ActorType,
+    string? Reason,
+    string CurrentStatus,
     DateTime OccurredAtUtc) : SessionEvent(OccurredAtUtc);
 
 public sealed record SessionEndedEvent(

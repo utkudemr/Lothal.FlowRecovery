@@ -86,6 +86,13 @@ internal sealed class InMemorySessionStore
             if (session.Status != "Active")
             {
                 stepSetEvent = null;
+                var rejectedOccurredAtUtc = DateTime.UtcNow;
+                if (session.EndedAtUtc.HasValue && rejectedOccurredAtUtc < session.EndedAtUtc.Value)
+                {
+                    rejectedOccurredAtUtc = session.EndedAtUtc.Value;
+                }
+
+                session.RecordCurrentStepRejectedNotActive(currentStep, changedBy, actorType, reason, rejectedOccurredAtUtc);
                 return SetCurrentStepOutcome.NotActive;
             }
 
