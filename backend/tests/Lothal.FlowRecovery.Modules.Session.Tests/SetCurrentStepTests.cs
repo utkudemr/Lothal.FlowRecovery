@@ -57,7 +57,7 @@ public sealed class SetCurrentStepTests
         var flowId = $"flow-{Guid.NewGuid():N}";
         var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
 
-        var first = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "A", "operator-b", "Operator", null));
+        var first = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "A", "operator-b", "Operator", "transition to A"));
         var second = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, "B", "operator-c", "System", null));
         var session = module.GetSession(start.SessionId.Value);
 
@@ -191,7 +191,7 @@ public sealed class SetCurrentStepTests
         var flowId = $"flow-{Guid.NewGuid():N}";
         var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
 
-        Assert.True(module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "payment", "operator-b", "Operator", null)).Success);
+        Assert.True(module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "payment", "operator-b", "Operator", "initial step")).Success);
         Assert.True(module.EndSession(new EndSessionCommand(start.SessionId.Value, "operator-a", "Operator", "done")).Success);
 
         var firstRetry = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, "review", "operator-c", "System", "retry-1"));
@@ -239,7 +239,7 @@ public sealed class SetCurrentStepTests
         var flowId = $"flow-{Guid.NewGuid():N}";
         var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
 
-        Assert.True(module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "payment", "operator-b", "Operator", null)).Success);
+        Assert.True(module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "payment", "operator-b", "Operator", "initial step")).Success);
         Assert.True(module.EndSession(new EndSessionCommand(start.SessionId.Value, "operator-a", "Operator", "done")).Success);
 
         var forcedEndedAtUtc = DateTime.UtcNow.AddHours(1);
@@ -335,6 +335,29 @@ public sealed class SetCurrentStepTests
         Assert.Equal("Rejected", result.Status);
         Assert.Null(result.Outcome);
         Assert.Null(result.Notification);
+    }
+
+    [Fact]
+    public void SetCurrentStep_ShouldReject_WhenOperatorReasonIsMissing()
+    {
+        var module = new SessionModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+
+        var missingReason = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "payment", "operator-b", "Operator", null));
+        var blankReason = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, "review", "operator-c", "oPeRaToR", "   "));
+
+        Assert.False(missingReason.Success);
+        Assert.Equal("Reason is required for operator step change.", missingReason.Error);
+        Assert.Equal("Rejected", missingReason.Status);
+        Assert.Null(missingReason.Outcome);
+        Assert.Null(missingReason.Notification);
+
+        Assert.False(blankReason.Success);
+        Assert.Equal("Reason is required for operator step change.", blankReason.Error);
+        Assert.Equal("Rejected", blankReason.Status);
+        Assert.Null(blankReason.Outcome);
+        Assert.Null(blankReason.Notification);
     }
 
     [Fact]

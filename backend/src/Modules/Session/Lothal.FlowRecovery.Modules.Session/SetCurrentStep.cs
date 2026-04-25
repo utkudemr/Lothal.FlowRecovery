@@ -65,6 +65,15 @@ internal sealed class SetCurrentStepHandler
             return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "ActorType is invalid.", null, null);
         }
 
+        if (actorType == "Operator" &&
+            string.IsNullOrWhiteSpace(command.Reason) &&
+            _store.TryGetSnapshot(command.SessionId, out var snapshot) &&
+            snapshot is not null &&
+            snapshot.Status == "Active")
+        {
+            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "Reason is required for operator step change.", null, null);
+        }
+
         var reason = command.Reason?.Trim();
         if (string.IsNullOrWhiteSpace(reason))
         {
