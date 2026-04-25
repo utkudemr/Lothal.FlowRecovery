@@ -111,6 +111,35 @@ public sealed class SetCurrentStepTests
     }
 
     [Fact]
+    public void SetCurrentStep_ShouldReject_WhenSessionIdIsEmpty()
+    {
+        var module = new SessionModule();
+
+        var result = module.SetCurrentStep(new SetCurrentStepCommand(Guid.Empty, "payment", "operator-b", "Operator", null));
+
+        Assert.False(result.Success);
+        Assert.Equal("SessionId is required.", result.Error);
+        Assert.Equal("Rejected", result.Status);
+        Assert.Null(result.Outcome);
+        Assert.Null(result.Notification);
+    }
+
+    [Fact]
+    public void SetCurrentStep_ShouldReject_WhenCurrentStepIsBlank()
+    {
+        var module = new SessionModule();
+        var start = module.StartSession(new StartSessionCommand($"flow-{Guid.NewGuid():N}", "operator-a"));
+
+        var result = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "   ", "operator-b", "Operator", null));
+
+        Assert.False(result.Success);
+        Assert.Equal("CurrentStep is required.", result.Error);
+        Assert.Equal("Rejected", result.Status);
+        Assert.Null(result.Outcome);
+        Assert.Null(result.Notification);
+    }
+
+    [Fact]
     public void SetCurrentStep_ShouldReject_WhenSessionExistsButIsNotActive_AndAppendRejectedEvent()
     {
         var module = new SessionModule();
@@ -153,6 +182,54 @@ public sealed class SetCurrentStepTests
         Assert.InRange(rejectedEvent.OccurredAtUtc, session.EndedAtUtc.Value, afterRetryUtc);
         Assert.InRange(rejectedEvent.OccurredAtUtc, beforeRetryUtc, afterRetryUtc);
         Assert.Single(session.Events.OfType<SessionCurrentStepSetEvent>());
+    }
+
+    [Fact]
+    public void SetCurrentStep_ShouldAppendOneRejectedEventPerRetry_WhenSessionIsEnded()
+    {
+        var module = new SessionModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+
+        Assert.True(module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "payment", "operator-b", "Operator", null)).Success);
+        Assert.True(module.EndSession(new EndSessionCommand(start.SessionId.Value, "operator-a", "Operator", "done")).Success);
+
+        var firstRetry = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, "review", "operator-c", "System", "retry-1"));
+        var secondRetry = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, "confirm", "operator-d", "System", "retry-2"));
+        var session = module.GetSession(start.SessionId.Value);
+
+        Assert.False(firstRetry.Success);
+        Assert.False(secondRetry.Success);
+        Assert.Equal(SetCurrentStepOutcome.NotActive, firstRetry.Outcome);
+        Assert.Equal(SetCurrentStepOutcome.NotActive, secondRetry.Outcome);
+        Assert.Equal(firstRetry.Status, secondRetry.Status);
+        Assert.Equal(firstRetry.CurrentStep, secondRetry.CurrentStep);
+        Assert.Null(firstRetry.Notification);
+        Assert.Null(secondRetry.Notification);
+
+        Assert.NotNull(session);
+        Assert.Equal("Ended", session.Status);
+        Assert.Equal("payment", session.CurrentStep);
+        Assert.NotNull(session.EndedAtUtc);
+        Assert.Equal(5, session.Events.Count);
+        Assert.Single(session.Events.OfType<SessionCurrentStepSetEvent>());
+        Assert.Equal(2, session.Events.OfType<SessionCurrentStepRejectedNotActiveEvent>().Count());
+
+        Assert.IsType<SessionStartedEvent>(session.Events[0]);
+        Assert.IsType<SessionCurrentStepSetEvent>(session.Events[1]);
+        Assert.IsType<SessionEndedEvent>(session.Events[2]);
+
+        var firstRejectedEvent = Assert.IsType<SessionCurrentStepRejectedNotActiveEvent>(session.Events[3]);
+        var secondRejectedEvent = Assert.IsType<SessionCurrentStepRejectedNotActiveEvent>(session.Events[4]);
+        Assert.Equal("payment", firstRejectedEvent.CurrentStep);
+        Assert.Equal("review", firstRejectedEvent.RequestedStep);
+        Assert.Equal("payment", secondRejectedEvent.CurrentStep);
+        Assert.Equal("confirm", secondRejectedEvent.RequestedStep);
+        Assert.Equal("Ended", firstRejectedEvent.CurrentStatus);
+        Assert.Equal("Ended", secondRejectedEvent.CurrentStatus);
+        Assert.True(firstRejectedEvent.OccurredAtUtc >= session.EndedAtUtc.Value);
+        Assert.True(secondRejectedEvent.OccurredAtUtc >= session.EndedAtUtc.Value);
+        Assert.True(secondRejectedEvent.OccurredAtUtc >= firstRejectedEvent.OccurredAtUtc);
     }
 
     [Fact]

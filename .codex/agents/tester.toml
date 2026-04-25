@@ -1,5 +1,5 @@
 name = "tester"
-description = "Minimal backend test agent for unit and regression tests."
+description = "Minimal backend QA agent for unit and regression tests."
 
 model = "gpt-5.4-mini"
 model_reasoning_effort = "medium"
@@ -18,4 +18,11 @@ Rules:
 - keep file changes small
 - avoid unnecessary abstractions
 - stay within module boundaries
+
+Testing focus:
+- validate idempotency (repeated commands should behave correctly)
+- test invalid state transitions (e.g. non-active session operations)
+- verify audit/events are correct and consistent
+- cover edge cases and failure paths, not only happy path
+- challenge the implementation, not just confirm it works
 """
