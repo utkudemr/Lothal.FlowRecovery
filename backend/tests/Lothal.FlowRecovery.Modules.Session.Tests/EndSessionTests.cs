@@ -274,12 +274,14 @@ public sealed class EndSessionTests
     public void SessionRecordEnd_ShouldEnforceActorInvariants()
     {
         var startedAtUtc = DateTime.UtcNow.AddMinutes(-1);
+        var sessionId = Guid.NewGuid();
         Assert.True(SessionEndMetadata.TryCreate("operator-a", "Operator", "done", out var validMetadata, out _));
         var session = SessionRecord.Create(
+            sessionId,
             "flow-record-invariants",
             "operator-a",
             startedAtUtc,
-            new SessionStartedEvent("flow-record-invariants", "operator-a", startedAtUtc));
+            new SessionStartedEvent(sessionId, "flow-record-invariants", "operator-a", startedAtUtc));
 
         Assert.Throws<ArgumentException>(() => session.End(validMetadata!, default));
 
@@ -289,16 +291,64 @@ public sealed class EndSessionTests
     }
 
     [Fact]
+    public void SessionRecordCreate_ShouldReject_WhenStartedEventSessionIdDiffers()
+    {
+        var startedAtUtc = DateTime.UtcNow.AddMinutes(-1);
+        var sessionId = Guid.NewGuid();
+
+        var mismatch = new SessionStartedEvent(
+            Guid.NewGuid(),
+            "flow-record-mismatch",
+            "operator-a",
+            startedAtUtc);
+
+        var exception = Assert.Throws<ArgumentException>(() => SessionRecord.Create(
+            sessionId,
+            "flow-record-mismatch",
+            "operator-a",
+            startedAtUtc,
+            mismatch));
+
+        Assert.Equal("startedEvent", exception.ParamName);
+        Assert.Contains("Started event session id must match the session id.", exception.Message);
+    }
+
+    [Fact]
+    public void SessionRecordCreate_ShouldReject_WhenSessionIdIsEmpty()
+    {
+        var startedAtUtc = DateTime.UtcNow.AddMinutes(-1);
+        var sessionId = Guid.NewGuid();
+
+        var startedEvent = new SessionStartedEvent(
+            sessionId,
+            "flow-record-empty-session-id",
+            "operator-a",
+            startedAtUtc);
+
+        var exception = Assert.Throws<ArgumentException>(() => SessionRecord.Create(
+            Guid.Empty,
+            "flow-record-empty-session-id",
+            "operator-a",
+            startedAtUtc,
+            startedEvent));
+
+        Assert.Equal("sessionId", exception.ParamName);
+        Assert.Contains("Session id is required.", exception.Message);
+    }
+
+    [Fact]
     public void SessionRecordEnd_ShouldReject_WhenEndedAtUtcPrecedesStartedAtUtc()
     {
         var startedAtUtc = DateTime.UtcNow;
         var endedAtUtc = startedAtUtc.AddTicks(-1);
+        var sessionId = Guid.NewGuid();
         Assert.True(SessionEndMetadata.TryCreate("operator-a", "Operator", "done", out var validMetadata, out _));
         var session = SessionRecord.Create(
+            sessionId,
             "flow-record-chronology",
             "operator-a",
             startedAtUtc,
-            new SessionStartedEvent("flow-record-chronology", "operator-a", startedAtUtc));
+            new SessionStartedEvent(sessionId, "flow-record-chronology", "operator-a", startedAtUtc));
 
         Assert.Throws<ArgumentException>(() => session.End(validMetadata!, endedAtUtc));
 
@@ -312,13 +362,15 @@ public sealed class EndSessionTests
     {
         var startedAtUtc = DateTime.UtcNow.AddMinutes(-1);
         var firstEndedAtUtc = DateTime.UtcNow;
+        var sessionId = Guid.NewGuid();
         Assert.True(SessionEndMetadata.TryCreate("operator-a", "Operator", "done", out var firstMetadata, out _));
         Assert.True(SessionEndMetadata.TryCreate("operator-b", "Operator", "duplicate", out var secondMetadata, out _));
         var session = SessionRecord.Create(
+            sessionId,
             "flow-record-repeat",
             "operator-a",
             startedAtUtc,
-            new SessionStartedEvent("flow-record-repeat", "operator-a", startedAtUtc));
+            new SessionStartedEvent(sessionId, "flow-record-repeat", "operator-a", startedAtUtc));
 
         var first = session.End(firstMetadata!, firstEndedAtUtc);
         var second = session.End(secondMetadata!, default);
@@ -337,12 +389,14 @@ public sealed class EndSessionTests
         var startedAtUtc = DateTime.UtcNow.AddMinutes(-1);
         var endedAtUtc = DateTime.UtcNow;
         var auditOccurredAtUtc = DateTime.UtcNow;
+        var sessionId = Guid.NewGuid();
         Assert.True(SessionEndMetadata.TryCreate("operator-a", "Operator", "done", out var metadata, out _));
         var session = SessionRecord.Create(
+            sessionId,
             "flow-record-audit",
             "operator-a",
             startedAtUtc,
-            new SessionStartedEvent("flow-record-audit", "operator-a", startedAtUtc));
+            new SessionStartedEvent(sessionId, "flow-record-audit", "operator-a", startedAtUtc));
 
         Assert.True(session.End(metadata!, endedAtUtc));
 

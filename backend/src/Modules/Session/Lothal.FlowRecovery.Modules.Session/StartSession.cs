@@ -35,8 +35,9 @@ internal sealed class StartSessionHandler
         }
 
         var startedAtUtc = DateTime.UtcNow;
-        var startedEvent = new SessionStartedEvent(flowId, startedBy, startedAtUtc);
-        var session = SessionRecord.Create(flowId, startedBy, startedAtUtc, startedEvent);
+        var sessionId = Guid.NewGuid();
+        var startedEvent = new SessionStartedEvent(sessionId, flowId, startedBy, startedAtUtc);
+        var session = SessionRecord.Create(sessionId, flowId, startedBy, startedAtUtc, startedEvent);
 
         if (!_store.TrySaveIfNoActiveSession(session))
         {

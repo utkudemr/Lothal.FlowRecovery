@@ -62,6 +62,7 @@ public sealed class ListActiveSessionsTests
         var startedEvent = Assert.IsType<SessionStartedEvent>(snapshot.Events[0]);
         var stepEvent = Assert.IsType<SessionCurrentStepSetEvent>(snapshot.Events[1]);
 
+        Assert.Equal(start.SessionId, startedEvent.SessionId);
         Assert.Equal(flowId, startedEvent.FlowId);
         Assert.Equal("payment", stepEvent.CurrentStep);
         Assert.Null(stepEvent.PreviousStep);

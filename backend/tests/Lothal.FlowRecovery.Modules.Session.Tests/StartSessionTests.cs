@@ -50,6 +50,7 @@ public sealed class StartSessionTests
         var flowId = $"flow-{Guid.NewGuid():N}";
 
         var result = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+        var session = module.GetSession(result.SessionId!.Value);
 
         Assert.True(result.Success);
         Assert.NotNull(result.SessionId);
@@ -57,5 +58,11 @@ public sealed class StartSessionTests
         Assert.Equal("Active", result.Status);
         Assert.NotNull(result.StartedAtUtc);
         Assert.Null(result.Error);
+        Assert.NotNull(session);
+        var startedEvent = Assert.IsType<SessionStartedEvent>(session.Events[0]);
+        Assert.Equal(result.SessionId, startedEvent.SessionId);
+        Assert.Equal(flowId, startedEvent.FlowId);
+        Assert.Equal("operator-a", startedEvent.StartedBy);
+        Assert.Equal(result.StartedAtUtc, startedEvent.OccurredAtUtc);
     }
 }

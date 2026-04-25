@@ -34,13 +34,24 @@ public sealed class SessionRecord
     }
 
     public static SessionRecord Create(
+        Guid sessionId,
         string flowId,
         string startedBy,
         DateTime startedAtUtc,
         SessionStartedEvent startedEvent)
     {
+        if (sessionId == Guid.Empty)
+        {
+            throw new ArgumentException("Session id is required.", nameof(sessionId));
+        }
+
+        if (startedEvent.SessionId != sessionId)
+        {
+            throw new ArgumentException("Started event session id must match the session id.", nameof(startedEvent));
+        }
+
         return new SessionRecord(
-            Guid.NewGuid(),
+            sessionId,
             flowId,
             startedBy,
             "Active",
@@ -286,6 +297,7 @@ public sealed class SessionRecord
 public abstract record SessionEvent(DateTime OccurredAtUtc);
 
 public sealed record SessionStartedEvent(
+    Guid SessionId,
     string FlowId,
     string StartedBy,
     DateTime OccurredAtUtc) : SessionEvent(OccurredAtUtc);

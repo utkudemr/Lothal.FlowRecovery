@@ -22,6 +22,7 @@ public sealed class GetSessionTests
         Assert.Single(session.Events);
 
         var startedEvent = Assert.IsType<SessionStartedEvent>(session.Events[0]);
+        Assert.Equal(start.SessionId, startedEvent.SessionId);
         Assert.Equal(flowId, startedEvent.FlowId);
         Assert.Equal("operator-a", startedEvent.StartedBy);
     }
@@ -45,6 +46,7 @@ public sealed class GetSessionTests
         Assert.Single(session.Events);
 
         var startedEvent = Assert.IsType<SessionStartedEvent>(session.Events[0]);
+        Assert.Equal(start.SessionId, startedEvent.SessionId);
         Assert.Equal(flowId, startedEvent.FlowId);
         Assert.Equal("operator-a", startedEvent.StartedBy);
     }
@@ -64,6 +66,7 @@ public sealed class GetSessionTests
         if (firstRead.Events is SessionEvent[] eventsArray && eventsArray.Length > 0)
         {
             eventsArray[0] = new SessionStartedEvent(
+                start.SessionId!.Value,
                 "flow-mutated",
                 "operator-mutated",
                 firstRead.StartedAtUtc.AddMinutes(1));
@@ -81,6 +84,7 @@ public sealed class GetSessionTests
         Assert.NotSame(firstRead.Events, secondRead.Events);
 
         var startedEvent = Assert.IsType<SessionStartedEvent>(secondRead.Events[0]);
+        Assert.Equal(start.SessionId, startedEvent.SessionId);
         Assert.Equal(flowId, startedEvent.FlowId);
         Assert.Equal("operator-a", startedEvent.StartedBy);
         Assert.Equal(start.StartedAtUtc, startedEvent.OccurredAtUtc);

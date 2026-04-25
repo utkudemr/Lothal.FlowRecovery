@@ -56,6 +56,7 @@ public sealed class SessionNotificationMapperTests
     public void Map_ShouldThrowNotSupportedException_ForNonStepEvents()
     {
         var exception = Assert.Throws<NotSupportedException>(() => SessionNotificationMapper.Map(new SessionStartedEvent(
+            Guid.NewGuid(),
             "flow-1",
             "operator-a",
             new DateTime(2026, 4, 24, 20, 30, 0, DateTimeKind.Utc))));
