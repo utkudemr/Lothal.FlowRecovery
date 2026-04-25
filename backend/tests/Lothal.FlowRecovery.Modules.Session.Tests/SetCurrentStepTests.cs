@@ -122,14 +122,16 @@ public sealed class SetCurrentStepTests
     }
 
     [Fact]
-    public void SetCurrentStep_ShouldReturnUnchanged_AndAppendNoEvent_WhenSameStepRequested()
+    public void SetCurrentStep_ShouldReturnUnchanged_AndAppendSessionCurrentStepUnchangedEvent_WhenSameStepRequested()
     {
         var module = new SessionModule();
         var flowId = $"flow-{Guid.NewGuid():N}";
         var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
 
         var first = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "payment", "operator-b", "System", null));
+        var beforeSecondSetUtc = DateTime.UtcNow;
         var second = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, " payment ", "operator-c", "sYsTeM", "   "));
+        var afterSecondSetUtc = DateTime.UtcNow;
 
         var session = module.GetSession(start.SessionId.Value);
 
@@ -144,8 +146,19 @@ public sealed class SetCurrentStepTests
 
         Assert.NotNull(session);
         Assert.Equal("payment", session.CurrentStep);
-        Assert.Equal(2, session.Events.Count);
-        Assert.Single(session.Events.OfType<SessionCurrentStepSetEvent>());
+        Assert.Equal(3, session.Events.Count);
+        Assert.IsType<SessionCurrentStepSetEvent>(session.Events[1]);
+
+        var unchangedEvent = Assert.IsType<SessionCurrentStepUnchangedEvent>(session.Events[2]);
+        Assert.Equal(start.SessionId.Value, unchangedEvent.SessionId);
+        Assert.Equal(flowId, unchangedEvent.FlowId);
+        Assert.Equal("payment", unchangedEvent.CurrentStep);
+        Assert.Equal("payment", unchangedEvent.RequestedStep);
+        Assert.Equal("operator-c", unchangedEvent.ChangedBy);
+        Assert.Equal("System", unchangedEvent.ActorType);
+        Assert.Null(unchangedEvent.Reason);
+        Assert.Equal("Unchanged", unchangedEvent.Outcome);
+        Assert.InRange(unchangedEvent.OccurredAtUtc, beforeSecondSetUtc, afterSecondSetUtc);
     }
 
     [Fact]

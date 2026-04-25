@@ -101,6 +101,16 @@ public sealed class SessionRecord
 
         if (CurrentStep == normalizedCurrentStep)
         {
+            _events.Add(new SessionCurrentStepUnchangedEvent(
+                SessionId,
+                FlowId,
+                CurrentStep,
+                normalizedCurrentStep,
+                normalizedChangedBy,
+                normalizedActorType,
+                normalizedReason,
+                "Unchanged",
+                occurredAtUtc));
             return false;
         }
 
@@ -224,6 +234,17 @@ public sealed record SessionCurrentStepSetEvent(
     string? Reason,
     string? PreviousStep,
     string CurrentStep,
+    DateTime OccurredAtUtc) : SessionEvent(OccurredAtUtc);
+
+public sealed record SessionCurrentStepUnchangedEvent(
+    Guid SessionId,
+    string FlowId,
+    string? CurrentStep,
+    string RequestedStep,
+    string ChangedBy,
+    string ActorType,
+    string? Reason,
+    string Outcome,
     DateTime OccurredAtUtc) : SessionEvent(OccurredAtUtc);
 
 public sealed record SessionEndedEvent(
