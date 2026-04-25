@@ -50,8 +50,10 @@ public sealed class SessionRecord
             new List<SessionEvent> { startedEvent });
     }
 
-    public bool SetCurrentStep(string currentStep, string changedBy, string actorType, string? reason, DateTime occurredAtUtc)
+    public bool SetCurrentStep(string currentStep, string changedBy, string actorType, string? reason, DateTime occurredAtUtc, out SessionCurrentStepSetEvent? stepSetEvent)
     {
+        stepSetEvent = null;
+
         if (Status != "Active")
         {
             return false;
@@ -104,7 +106,7 @@ public sealed class SessionRecord
 
         var previousStep = CurrentStep;
         CurrentStep = normalizedCurrentStep;
-        _events.Add(new SessionCurrentStepSetEvent(
+        stepSetEvent = new SessionCurrentStepSetEvent(
             SessionId,
             FlowId,
             normalizedChangedBy,
@@ -112,7 +114,8 @@ public sealed class SessionRecord
             normalizedReason,
             previousStep,
             CurrentStep,
-            occurredAtUtc));
+            occurredAtUtc);
+        _events.Add(stepSetEvent);
         return true;
     }
 

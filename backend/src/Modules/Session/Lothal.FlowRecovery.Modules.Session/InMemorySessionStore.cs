@@ -70,23 +70,26 @@ internal sealed class InMemorySessionStore
         string changedBy,
         string actorType,
         string? reason,
-        out SessionRecord? session)
+        out SessionRecord? session,
+        out SessionCurrentStepSetEvent? stepSetEvent)
     {
         lock (_sync)
         {
             if (!_sessions.TryGetValue(sessionId, out var currentSession))
             {
                 session = null;
+                stepSetEvent = null;
                 return SetCurrentStepOutcome.NotFound;
             }
 
             session = currentSession;
             if (session.Status != "Active")
             {
+                stepSetEvent = null;
                 return SetCurrentStepOutcome.NotActive;
             }
 
-            var changed = session.SetCurrentStep(currentStep, changedBy, actorType, reason, DateTime.UtcNow);
+            var changed = session.SetCurrentStep(currentStep, changedBy, actorType, reason, DateTime.UtcNow, out stepSetEvent);
             return changed ? SetCurrentStepOutcome.Changed : SetCurrentStepOutcome.Unchanged;
         }
     }

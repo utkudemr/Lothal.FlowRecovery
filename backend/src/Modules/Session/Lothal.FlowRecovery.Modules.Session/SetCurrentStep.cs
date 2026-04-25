@@ -14,7 +14,8 @@ public sealed record SetCurrentStepResult(
     string Status,
     string? CurrentStep,
     string? Error,
-    SetCurrentStepOutcome? Outcome);
+    SetCurrentStepOutcome? Outcome,
+    SessionNotification? Notification);
 
 public enum SetCurrentStepOutcome
 {
@@ -37,31 +38,31 @@ internal sealed class SetCurrentStepHandler
     {
         if (command.SessionId == Guid.Empty)
         {
-            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "SessionId is required.", null);
+            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "SessionId is required.", null, null);
         }
 
         var currentStep = command.CurrentStep?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(currentStep))
         {
-            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "CurrentStep is required.", null);
+            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "CurrentStep is required.", null, null);
         }
 
         var changedBy = command.ChangedBy?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(changedBy))
         {
-            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "ChangedBy is required.", null);
+            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "ChangedBy is required.", null, null);
         }
 
         var trimmedActorType = command.ActorType?.Trim();
         if (string.IsNullOrWhiteSpace(trimmedActorType))
         {
-            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "ActorType is required.", null);
+            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "ActorType is required.", null, null);
         }
 
         var actorType = NormalizeActorType(trimmedActorType);
         if (actorType is null)
         {
-            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "ActorType is invalid.", null);
+            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "ActorType is invalid.", null, null);
         }
 
         var reason = command.Reason?.Trim();
@@ -70,18 +71,31 @@ internal sealed class SetCurrentStepHandler
             reason = null;
         }
 
-        var outcome = _store.TrySetCurrentStep(command.SessionId, currentStep, changedBy, actorType, reason, out var session);
+        var outcome = _store.TrySetCurrentStep(command.SessionId, currentStep, changedBy, actorType, reason, out var session, out var stepSetEvent);
         if (outcome == SetCurrentStepOutcome.NotFound)
         {
-            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "Session not found.", outcome);
+            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "Session not found.", outcome, null);
         }
 
         if (outcome == SetCurrentStepOutcome.NotActive)
         {
-            return new SetCurrentStepResult(false, session!.SessionId, session.FlowId, session.Status, session.CurrentStep, "Session is not active.", outcome);
+            return new SetCurrentStepResult(false, session!.SessionId, session.FlowId, session.Status, session.CurrentStep, "Session is not active.", outcome, null);
         }
 
-        return new SetCurrentStepResult(true, session!.SessionId, session.FlowId, session.Status, session.CurrentStep, null, outcome);
+        SessionNotification? notification = null;
+        if (outcome == SetCurrentStepOutcome.Changed)
+        {
+            notification = stepSetEvent is not null
+                ? SessionNotificationMapper.Map(stepSetEvent)
+                : null;
+
+            if (notification is null)
+            {
+                throw new InvalidOperationException("Invariant violation: changed outcome must produce a step-changed notification.");
+            }
+        }
+
+        return new SetCurrentStepResult(true, session!.SessionId, session.FlowId, session.Status, session.CurrentStep, null, outcome, notification);
     }
 
     private static string? NormalizeActorType(string actorType)

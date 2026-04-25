@@ -39,6 +39,16 @@ Current implementation is session-module only and runs in-memory in a single pro
 - no persistence yet
 - no distributed consistency yet
 
+## Contract Stability
+
+This project is currently in an early development phase.
+
+- Public module contracts (e.g. SessionModule results) are NOT considered stable yet
+- Breaking changes in result shapes are allowed
+- No backward compatibility is guaranteed at this stage
+
+Stability guarantees will be introduced once external consumers are defined.
+
 ## Evolution Strategy
 The system is designed to be split into microservices later if needed:
 - Session service

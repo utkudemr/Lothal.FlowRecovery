@@ -24,6 +24,15 @@ public sealed class SetCurrentStepTests
         Assert.Equal("payment", result.CurrentStep);
         Assert.Null(result.Error);
         Assert.Equal(SetCurrentStepOutcome.Changed, result.Outcome);
+        var notification = Assert.IsType<StepChangedNotification>(result.Notification);
+        Assert.Equal(start.SessionId.Value, notification.SessionId);
+        Assert.Equal(flowId, notification.FlowId);
+        Assert.Equal("payment", notification.CurrentStep);
+        Assert.Null(notification.PreviousStep);
+        Assert.Equal("operator-b", notification.ChangedBy);
+        Assert.Equal("Operator", notification.ActorType);
+        Assert.Equal("manual correction", notification.Reason);
+        Assert.InRange(notification.OccurredAtUtc, beforeSetUtc, afterSetUtc);
 
         Assert.NotNull(session);
         Assert.Equal("payment", session.CurrentStep);
@@ -53,8 +62,16 @@ public sealed class SetCurrentStepTests
 
         Assert.True(first.Success);
         Assert.True(second.Success);
+        Assert.Equal(SetCurrentStepOutcome.Changed, first.Outcome);
+        Assert.Equal(SetCurrentStepOutcome.Changed, second.Outcome);
         Assert.Equal("A", first.CurrentStep);
         Assert.Equal("B", second.CurrentStep);
+        var firstNotification = Assert.IsType<StepChangedNotification>(first.Notification);
+        Assert.Null(firstNotification.PreviousStep);
+        Assert.Equal("A", firstNotification.CurrentStep);
+        var secondNotification = Assert.IsType<StepChangedNotification>(second.Notification);
+        Assert.Equal("A", secondNotification.PreviousStep);
+        Assert.Equal("B", secondNotification.CurrentStep);
 
         Assert.NotNull(session);
         Assert.Equal(3, session.Events.Count);
@@ -86,6 +103,7 @@ public sealed class SetCurrentStepTests
         Assert.False(missing.Success);
         Assert.Equal("Session not found.", missing.Error);
         Assert.Equal(SetCurrentStepOutcome.NotFound, missing.Outcome);
+        Assert.Null(missing.Notification);
 
         Assert.False(ended.Success);
         Assert.Equal(start.SessionId.Value, ended.SessionId);
@@ -94,6 +112,7 @@ public sealed class SetCurrentStepTests
         Assert.Null(ended.CurrentStep);
         Assert.Equal("Session is not active.", ended.Error);
         Assert.Equal(SetCurrentStepOutcome.NotActive, ended.Outcome);
+        Assert.Null(ended.Notification);
 
         Assert.NotNull(session);
         Assert.Equal("Ended", session.Status);
@@ -116,10 +135,12 @@ public sealed class SetCurrentStepTests
 
         Assert.True(first.Success);
         Assert.Equal(SetCurrentStepOutcome.Changed, first.Outcome);
+        Assert.NotNull(first.Notification);
         Assert.True(second.Success);
         Assert.Equal(SetCurrentStepOutcome.Unchanged, second.Outcome);
         Assert.Equal("payment", second.CurrentStep);
         Assert.Null(second.Error);
+        Assert.Null(second.Notification);
 
         Assert.NotNull(session);
         Assert.Equal("payment", session.CurrentStep);
@@ -140,6 +161,7 @@ public sealed class SetCurrentStepTests
         Assert.Equal("ChangedBy is required.", result.Error);
         Assert.Equal("Rejected", result.Status);
         Assert.Null(result.Outcome);
+        Assert.Null(result.Notification);
     }
 
     [Fact]
@@ -155,6 +177,7 @@ public sealed class SetCurrentStepTests
         Assert.Equal("ActorType is invalid.", result.Error);
         Assert.Equal("Rejected", result.Status);
         Assert.Null(result.Outcome);
+        Assert.Null(result.Notification);
     }
 
     [Fact]
