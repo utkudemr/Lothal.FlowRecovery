@@ -335,6 +335,15 @@ public sealed class SetCurrentStepTests
         Assert.Equal("Rejected", result.Status);
         Assert.Null(result.Outcome);
         Assert.Null(result.Notification);
+
+        var session = module.GetSession(start.SessionId!.Value);
+
+        Assert.NotNull(session);
+        Assert.Null(session.CurrentStep);
+        Assert.Single(session.Events);
+        Assert.IsType<SessionStartedEvent>(session.Events[0]);
+        Assert.Empty(session.Events.OfType<SessionCurrentStepSetEvent>());
+        Assert.Empty(session.Events.OfType<SessionCurrentStepRejectedNotActiveEvent>());
     }
 
     [Fact]
@@ -358,6 +367,63 @@ public sealed class SetCurrentStepTests
         Assert.Equal("Rejected", blankReason.Status);
         Assert.Null(blankReason.Outcome);
         Assert.Null(blankReason.Notification);
+
+        var session = module.GetSession(start.SessionId!.Value);
+
+        Assert.NotNull(session);
+        Assert.Null(session.CurrentStep);
+        Assert.Single(session.Events);
+        Assert.IsType<SessionStartedEvent>(session.Events[0]);
+        Assert.Empty(session.Events.OfType<SessionCurrentStepSetEvent>());
+        Assert.Empty(session.Events.OfType<SessionCurrentStepRejectedNotActiveEvent>());
+    }
+
+    [Fact]
+    public void SetCurrentStep_ShouldReject_WhenActorTypeIsBlank()
+    {
+        var module = new SessionModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+
+        var result = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "payment", "operator-b", "   ", null));
+        var session = module.GetSession(start.SessionId.Value);
+
+        Assert.False(result.Success);
+        Assert.Equal("ActorType is required.", result.Error);
+        Assert.Equal("Rejected", result.Status);
+        Assert.Null(result.Outcome);
+        Assert.Null(result.Notification);
+
+        Assert.NotNull(session);
+        Assert.Null(session.CurrentStep);
+        Assert.Single(session.Events);
+        Assert.IsType<SessionStartedEvent>(session.Events[0]);
+        Assert.Empty(session.Events.OfType<SessionCurrentStepSetEvent>());
+        Assert.Empty(session.Events.OfType<SessionCurrentStepRejectedNotActiveEvent>());
+    }
+
+    [Fact]
+    public void SetCurrentStep_ShouldReject_WhenChangedByIsMissing_AndLeaveSessionStateUnchanged()
+    {
+        var module = new SessionModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+
+        var result = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "payment", " ", "Operator", null));
+        var session = module.GetSession(start.SessionId.Value);
+
+        Assert.False(result.Success);
+        Assert.Equal("ChangedBy is required.", result.Error);
+        Assert.Equal("Rejected", result.Status);
+        Assert.Null(result.Outcome);
+        Assert.Null(result.Notification);
+
+        Assert.NotNull(session);
+        Assert.Null(session.CurrentStep);
+        Assert.Single(session.Events);
+        Assert.IsType<SessionStartedEvent>(session.Events[0]);
+        Assert.Empty(session.Events.OfType<SessionCurrentStepSetEvent>());
+        Assert.Empty(session.Events.OfType<SessionCurrentStepRejectedNotActiveEvent>());
     }
 
     [Fact]

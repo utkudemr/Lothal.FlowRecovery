@@ -39,4 +39,34 @@ public sealed class ListActiveSessionsTests
         Assert.DoesNotContain(sessions, session => session.SessionId == endedStart.SessionId);
         Assert.All(sessions, session => Assert.Equal("Active", session.Status));
     }
+
+    [Fact]
+    public void ListActiveSessions_ShouldReflectUpdatedCurrentStep_AndPreserveEventHistory_AfterSetCurrentStep()
+    {
+        var module = new SessionModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+
+        var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+        var beforeSetUtc = DateTime.UtcNow;
+        var setResult = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "payment", "operator-b", "System", null));
+        var afterSetUtc = DateTime.UtcNow;
+
+        var sessions = module.ListActiveSessions();
+        var snapshot = Assert.Single(sessions, session => session.SessionId == start.SessionId);
+
+        Assert.True(setResult.Success);
+        Assert.Equal("payment", setResult.CurrentStep);
+        Assert.Equal("payment", snapshot.CurrentStep);
+        Assert.Equal(2, snapshot.Events.Count);
+
+        var startedEvent = Assert.IsType<SessionStartedEvent>(snapshot.Events[0]);
+        var stepEvent = Assert.IsType<SessionCurrentStepSetEvent>(snapshot.Events[1]);
+
+        Assert.Equal(flowId, startedEvent.FlowId);
+        Assert.Equal("payment", stepEvent.CurrentStep);
+        Assert.Null(stepEvent.PreviousStep);
+        Assert.Equal("operator-b", stepEvent.ChangedBy);
+        Assert.Equal("System", stepEvent.ActorType);
+        Assert.InRange(stepEvent.OccurredAtUtc, beforeSetUtc, afterSetUtc);
+    }
 }
