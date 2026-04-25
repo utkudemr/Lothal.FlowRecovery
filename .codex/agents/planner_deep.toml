@@ -1,6 +1,6 @@
 name = "planner_deep"
 description = "Planning agent for medium and large backend tasks."
-model = "gpt-5.4"
+model = "gpt-5.5"
 model_reasoning_effort = "high"
 
 developer_instructions = """

@@ -1,6 +1,6 @@
 name = "coder_fast"
 description = "Fast implementation agent for small, low-risk coding tasks."
-model = "gpt-5.4-mini"
+model = "gpt-5.5-mini"
 model_reasoning_effort = "medium"
 
 developer_instructions = """

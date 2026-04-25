@@ -1,6 +1,6 @@
 name = "coder_deep"
 description = "Stronger implementation agent for complex bugs and architecture-sensitive work."
-model = "gpt-5.4"
+model = "gpt-5.5"
 model_reasoning_effort = "high"
 
 developer_instructions = """

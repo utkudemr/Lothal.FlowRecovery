@@ -1,7 +1,7 @@
 name = "tester"
 description = "Minimal backend test agent for unit and regression tests."
 
-model = "gpt-5.4-mini"
+model = "gpt-5.5-mini"
 model_reasoning_effort = "medium"
 
 developer_instructions = """
