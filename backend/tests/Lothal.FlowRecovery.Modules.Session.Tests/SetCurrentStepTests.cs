@@ -95,6 +95,7 @@ public sealed class SetCurrentStepTests
         var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
 
         var missing = module.SetCurrentStep(new SetCurrentStepCommand(Guid.NewGuid(), "payment", "operator-b", "Operator", null));
+        var missingWithBlankReason = module.SetCurrentStep(new SetCurrentStepCommand(Guid.NewGuid(), "payment", "operator-c", "Operator", "   "));
 
         var session = module.GetSession(start.SessionId!.Value);
 
@@ -102,6 +103,11 @@ public sealed class SetCurrentStepTests
         Assert.Equal("Session not found.", missing.Error);
         Assert.Equal(SetCurrentStepOutcome.NotFound, missing.Outcome);
         Assert.Null(missing.Notification);
+
+        Assert.False(missingWithBlankReason.Success);
+        Assert.Equal("Session not found.", missingWithBlankReason.Error);
+        Assert.Equal(SetCurrentStepOutcome.NotFound, missingWithBlankReason.Outcome);
+        Assert.Null(missingWithBlankReason.Notification);
 
         Assert.NotNull(session);
         Assert.Equal("Active", session.Status);
@@ -182,6 +188,45 @@ public sealed class SetCurrentStepTests
         Assert.InRange(rejectedEvent.OccurredAtUtc, session.EndedAtUtc.Value, afterRetryUtc);
         Assert.InRange(rejectedEvent.OccurredAtUtc, beforeRetryUtc, afterRetryUtc);
         Assert.Single(session.Events.OfType<SessionCurrentStepSetEvent>());
+    }
+
+    [Fact]
+    public void SetCurrentStep_ShouldReject_WhenEndedSessionOperatorReasonIsMissing_AndAppendRejectedEvent()
+    {
+        var module = new SessionModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+
+        Assert.True(module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "payment", "operator-b", "System", null)).Success);
+        Assert.True(module.EndSession(new EndSessionCommand(start.SessionId.Value, "operator-a", "Operator", "done")).Success);
+
+        var nullReasonResult = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, "review", "operator-c", "Operator", null));
+        var blankReasonResult = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, "confirm", "operator-d", "Operator", "   "));
+        var session = module.GetSession(start.SessionId.Value);
+
+        Assert.False(nullReasonResult.Success);
+        Assert.Equal("Reason is required for operator step change.", nullReasonResult.Error);
+        Assert.Equal("Ended", nullReasonResult.Status);
+        Assert.Equal(SetCurrentStepOutcome.NotActive, nullReasonResult.Outcome);
+        Assert.Null(nullReasonResult.Notification);
+
+        Assert.False(blankReasonResult.Success);
+        Assert.Equal("Reason is required for operator step change.", blankReasonResult.Error);
+        Assert.Equal("Ended", blankReasonResult.Status);
+        Assert.Equal(SetCurrentStepOutcome.NotActive, blankReasonResult.Outcome);
+        Assert.Null(blankReasonResult.Notification);
+
+        Assert.NotNull(session);
+        Assert.Equal("Ended", session.Status);
+        Assert.Equal("payment", session.CurrentStep);
+        Assert.Equal(5, session.Events.Count);
+
+        var rejectedEvents = session.Events.OfType<SessionCurrentStepRejectedNotActiveEvent>().ToArray();
+        Assert.Equal(2, rejectedEvents.Length);
+        Assert.Equal("review", rejectedEvents[0].RequestedStep);
+        Assert.Null(rejectedEvents[0].Reason);
+        Assert.Equal("confirm", rejectedEvents[1].RequestedStep);
+        Assert.Null(rejectedEvents[1].Reason);
     }
 
     [Fact]

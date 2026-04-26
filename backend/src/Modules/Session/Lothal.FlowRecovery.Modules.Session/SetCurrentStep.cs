@@ -65,19 +65,22 @@ internal sealed class SetCurrentStepHandler
             return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "ActorType is invalid.", null, null);
         }
 
-        if (actorType == "Operator" &&
-            string.IsNullOrWhiteSpace(command.Reason) &&
-            _store.TryGetSnapshot(command.SessionId, out var snapshot) &&
-            snapshot is not null &&
-            snapshot.Status == "Active")
+        if (!_store.TryGetSnapshot(command.SessionId, out var snapshot) || snapshot is null)
         {
-            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "Reason is required for operator step change.", null, null);
+            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "Session not found.", SetCurrentStepOutcome.NotFound, null);
         }
 
         var reason = command.Reason?.Trim();
         if (string.IsNullOrWhiteSpace(reason))
         {
             reason = null;
+        }
+
+        if (actorType == "Operator" &&
+            reason is null &&
+            snapshot.Status == "Active")
+        {
+            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "Reason is required for operator step change.", null, null);
         }
 
         var outcome = _store.TrySetCurrentStep(
@@ -88,14 +91,13 @@ internal sealed class SetCurrentStepHandler
             reason,
             out var session,
             out var stepSetEvent);
-        if (outcome == SetCurrentStepOutcome.NotFound)
-        {
-            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "Session not found.", outcome, null);
-        }
-
         if (outcome == SetCurrentStepOutcome.NotActive)
         {
-            return new SetCurrentStepResult(false, session!.SessionId, session.FlowId, session.Status, session.CurrentStep, "Session is not active.", outcome, null);
+            var error = actorType == "Operator" && reason is null
+                ? "Reason is required for operator step change."
+                : "Session is not active.";
+
+            return new SetCurrentStepResult(false, session!.SessionId, session.FlowId, session.Status, session.CurrentStep, error, outcome, null);
         }
 
         SessionNotification? notification = null;
