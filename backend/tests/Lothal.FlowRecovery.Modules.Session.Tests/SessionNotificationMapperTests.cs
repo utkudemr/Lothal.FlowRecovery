@@ -7,6 +7,34 @@ internal sealed record UnsupportedSessionEvent(DateTime OccurredAtUtc) : Session
 public sealed class SessionNotificationMapperTests
 {
     [Fact]
+    public void Map_ShouldHaveExplicitDecision_ForEveryConcreteSessionEvent()
+    {
+        var concreteSessionEvents = typeof(SessionEvent)
+            .Assembly
+            .GetTypes()
+            .Where(type => type is { IsClass: true, IsAbstract: false } && type.IsSubclassOf(typeof(SessionEvent)))
+            .ToArray();
+
+        Assert.NotEmpty(concreteSessionEvents);
+
+        foreach (var eventType in concreteSessionEvents)
+        {
+            var mapped = SessionNotificationMapper.Map(CreateSessionEvent(eventType));
+
+            if (eventType == typeof(SessionStartedEvent) ||
+                eventType == typeof(SessionCurrentStepSetEvent) ||
+                eventType == typeof(SessionEndedEvent))
+            {
+                Assert.NotNull(mapped);
+            }
+            else
+            {
+                Assert.Null(mapped);
+            }
+        }
+    }
+
+    [Fact]
     public void Map_ShouldConvertSessionStartedEvent_ToSessionStartedNotification()
     {
         var occurredAtUtc = new DateTime(2026, 4, 24, 20, 25, 0, DateTimeKind.Utc);
@@ -167,4 +195,19 @@ public sealed class SessionNotificationMapperTests
 
         Assert.Contains(nameof(UnsupportedSessionEvent), exception.Message);
     }
+
+    private static SessionEvent CreateSessionEvent(Type eventType) =>
+        eventType == typeof(SessionStartedEvent)
+            ? new SessionStartedEvent(Guid.NewGuid(), "flow-1", "operator-a", new DateTime(2026, 4, 24, 20, 25, 0, DateTimeKind.Utc))
+            : eventType == typeof(SessionCurrentStepSetEvent)
+                ? new SessionCurrentStepSetEvent(Guid.NewGuid(), "flow-1", "operator-b", "Operator", "manual correction", "cart", "payment", new DateTime(2026, 4, 24, 20, 30, 0, DateTimeKind.Utc))
+                : eventType == typeof(SessionCurrentStepUnchangedEvent)
+                    ? new SessionCurrentStepUnchangedEvent(Guid.NewGuid(), "flow-1", "cart", "payment", "operator-b", "Operator", null, "Unchanged", new DateTime(2026, 4, 24, 20, 41, 0, DateTimeKind.Utc))
+                    : eventType == typeof(SessionCurrentStepRejectedNotActiveEvent)
+                        ? new SessionCurrentStepRejectedNotActiveEvent(Guid.NewGuid(), "flow-1", "cart", "payment", "operator-b", "Operator", "session already ended", "Ended", new DateTime(2026, 4, 24, 20, 42, 0, DateTimeKind.Utc))
+                        : eventType == typeof(SessionEndedEvent)
+                            ? new SessionEndedEvent(Guid.NewGuid(), "flow-1", "operator-b", "System", null, "Active", "Ended", new DateTime(2026, 4, 24, 20, 35, 0, DateTimeKind.Utc))
+                            : eventType == typeof(SessionEndAlreadyEndedAuditEvent)
+                                ? new SessionEndAlreadyEndedAuditEvent(Guid.NewGuid(), "flow-1", "operator-b", "Operator", "duplicate", "Ended", DateTime.UtcNow, new DateTime(2026, 4, 24, 20, 40, 0, DateTimeKind.Utc))
+                                : throw new NotSupportedException($"Unsupported session event type: {eventType.FullName}");
 }
