@@ -50,6 +50,21 @@ public sealed class SessionRecord
             throw new ArgumentException("Started event session id must match the session id.", nameof(startedEvent));
         }
 
+        if (startedEvent.FlowId != flowId)
+        {
+            throw new ArgumentException("Started event flow id must match the flow id.", nameof(startedEvent));
+        }
+
+        if (startedEvent.StartedBy != startedBy)
+        {
+            throw new ArgumentException("Started event started by must match the started by value.", nameof(startedEvent));
+        }
+
+        if (startedEvent.OccurredAtUtc != startedAtUtc)
+        {
+            throw new ArgumentException("Started event occurred at UTC must match the started at UTC value.", nameof(startedEvent));
+        }
+
         return new SessionRecord(
             sessionId,
             flowId,

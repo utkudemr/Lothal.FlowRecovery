@@ -334,6 +334,75 @@ public sealed class EndSessionTests
     }
 
     [Fact]
+    public void SessionRecordCreate_ShouldReject_WhenStartedEventFlowIdDiffers()
+    {
+        var startedAtUtc = DateTime.UtcNow.AddMinutes(-1);
+        var sessionId = Guid.NewGuid();
+
+        var startedEvent = new SessionStartedEvent(
+            sessionId,
+            "flow-record-mismatch-event",
+            "operator-a",
+            startedAtUtc);
+
+        var exception = Assert.Throws<ArgumentException>(() => SessionRecord.Create(
+            sessionId,
+            "flow-record-mismatch",
+            "operator-a",
+            startedAtUtc,
+            startedEvent));
+
+        Assert.Equal("startedEvent", exception.ParamName);
+        Assert.Contains("Started event flow id must match the flow id.", exception.Message);
+    }
+
+    [Fact]
+    public void SessionRecordCreate_ShouldReject_WhenStartedEventStartedByDiffers()
+    {
+        var startedAtUtc = DateTime.UtcNow.AddMinutes(-1);
+        var sessionId = Guid.NewGuid();
+
+        var startedEvent = new SessionStartedEvent(
+            sessionId,
+            "flow-record-mismatch",
+            "operator-b",
+            startedAtUtc);
+
+        var exception = Assert.Throws<ArgumentException>(() => SessionRecord.Create(
+            sessionId,
+            "flow-record-mismatch",
+            "operator-a",
+            startedAtUtc,
+            startedEvent));
+
+        Assert.Equal("startedEvent", exception.ParamName);
+        Assert.Contains("Started event started by must match the started by value.", exception.Message);
+    }
+
+    [Fact]
+    public void SessionRecordCreate_ShouldReject_WhenStartedEventOccurredAtUtcDiffers()
+    {
+        var startedAtUtc = DateTime.UtcNow.AddMinutes(-1);
+        var sessionId = Guid.NewGuid();
+
+        var startedEvent = new SessionStartedEvent(
+            sessionId,
+            "flow-record-mismatch",
+            "operator-a",
+            startedAtUtc.AddTicks(1));
+
+        var exception = Assert.Throws<ArgumentException>(() => SessionRecord.Create(
+            sessionId,
+            "flow-record-mismatch",
+            "operator-a",
+            startedAtUtc,
+            startedEvent));
+
+        Assert.Equal("startedEvent", exception.ParamName);
+        Assert.Contains("Started event occurred at UTC must match the started at UTC value.", exception.Message);
+    }
+
+    [Fact]
     public void SessionRecordCreate_ShouldReject_WhenSessionIdIsEmpty()
     {
         var startedAtUtc = DateTime.UtcNow.AddMinutes(-1);
