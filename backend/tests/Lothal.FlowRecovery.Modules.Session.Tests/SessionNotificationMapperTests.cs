@@ -2,6 +2,8 @@ using Lothal.FlowRecovery.Modules.Session;
 
 namespace Lothal.FlowRecovery.Modules.Session.Tests;
 
+internal sealed record UnsupportedSessionEvent(DateTime OccurredAtUtc) : SessionEvent(OccurredAtUtc);
+
 public sealed class SessionNotificationMapperTests
 {
     [Fact]
@@ -99,9 +101,9 @@ public sealed class SessionNotificationMapperTests
     }
 
     [Fact]
-    public void Map_ShouldThrowNotSupportedException_ForAuditAndNoOpEvents()
+    public void Map_ShouldReturnNull_ForSessionEndAlreadyEndedAuditEvent()
     {
-        var auditException = Assert.Throws<NotSupportedException>(() => SessionNotificationMapper.Map(new SessionEndAlreadyEndedAuditEvent(
+        var mapped = SessionNotificationMapper.Map(new SessionEndAlreadyEndedAuditEvent(
             Guid.NewGuid(),
             "flow-1",
             "operator-b",
@@ -109,9 +111,43 @@ public sealed class SessionNotificationMapperTests
             "duplicate",
             "Ended",
             DateTime.UtcNow,
-            new DateTime(2026, 4, 24, 20, 40, 0, DateTimeKind.Utc))));
+            new DateTime(2026, 4, 24, 20, 40, 0, DateTimeKind.Utc)));
 
-        Assert.Equal("Unsupported session event type: SessionEndAlreadyEndedAuditEvent.", auditException.Message);
+        Assert.Null(mapped);
+    }
+
+    [Fact]
+    public void Map_ShouldReturnNull_ForSessionCurrentStepUnchangedEvent()
+    {
+        var mapped = SessionNotificationMapper.Map(new SessionCurrentStepUnchangedEvent(
+            Guid.NewGuid(),
+            "flow-1",
+            "cart",
+            "payment",
+            "operator-b",
+            "Operator",
+            null,
+            "Unchanged",
+            new DateTime(2026, 4, 24, 20, 41, 0, DateTimeKind.Utc)));
+
+        Assert.Null(mapped);
+    }
+
+    [Fact]
+    public void Map_ShouldReturnNull_ForSessionCurrentStepRejectedNotActiveEvent()
+    {
+        var mapped = SessionNotificationMapper.Map(new SessionCurrentStepRejectedNotActiveEvent(
+            Guid.NewGuid(),
+            "flow-1",
+            "cart",
+            "payment",
+            "operator-b",
+            "Operator",
+            "session already ended",
+            "Ended",
+            new DateTime(2026, 4, 24, 20, 42, 0, DateTimeKind.Utc)));
+
+        Assert.Null(mapped);
     }
 
     [Fact]
@@ -120,5 +156,15 @@ public sealed class SessionNotificationMapperTests
         var exception = Assert.Throws<ArgumentNullException>(() => SessionNotificationMapper.Map(null!));
 
         Assert.Equal("@event", exception.ParamName);
+    }
+
+    [Fact]
+    public void Map_ShouldThrowNotSupportedException_ForUnsupportedSessionEvent()
+    {
+        var exception = Assert.Throws<NotSupportedException>(() =>
+            SessionNotificationMapper.Map(new UnsupportedSessionEvent(
+                new DateTime(2026, 4, 24, 20, 45, 0, DateTimeKind.Utc))));
+
+        Assert.Contains(nameof(UnsupportedSessionEvent), exception.Message);
     }
 }

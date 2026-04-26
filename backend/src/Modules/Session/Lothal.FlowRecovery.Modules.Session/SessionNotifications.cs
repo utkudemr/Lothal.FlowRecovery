@@ -59,7 +59,11 @@ public static class SessionNotificationMapper
                 endedEvent.PreviousStatus,
                 endedEvent.NewStatus,
                 endedEvent.OccurredAtUtc),
-            _ => throw new NotSupportedException($"Unsupported session event type: {@event.GetType().Name}."),
+            SessionEndAlreadyEndedAuditEvent
+            or SessionCurrentStepUnchangedEvent
+            or SessionCurrentStepRejectedNotActiveEvent => null,
+            _ => throw new NotSupportedException(
+                $"Unsupported session event type: {@event.GetType().FullName}."),
         };
     }
 }
