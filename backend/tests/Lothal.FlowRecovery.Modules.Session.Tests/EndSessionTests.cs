@@ -22,10 +22,13 @@ public sealed class EndSessionTests
         Assert.Equal("EndedBy is required.", missingEndedBy.Error);
         Assert.False(missingActorType.Success);
         Assert.Equal("ActorType is required.", missingActorType.Error);
+        Assert.Null(missingActorType.Notification);
         Assert.False(missingOperatorReason.Success);
         Assert.Equal("Reason is required for operator end.", missingOperatorReason.Error);
+        Assert.Null(missingOperatorReason.Notification);
         Assert.False(unknownActorType.Success);
         Assert.Equal("ActorType is invalid.", unknownActorType.Error);
+        Assert.Null(unknownActorType.Notification);
     }
 
     [Fact]
@@ -66,6 +69,7 @@ public sealed class EndSessionTests
         Assert.False(result.Success);
         Assert.Equal("Session not found.", result.Error);
         Assert.Equal(EndSessionOutcome.NotFound, result.Outcome);
+        Assert.Null(result.Notification);
         Assert.NotNull(existing);
         Assert.Equal("Active", existing.Status);
         Assert.Single(existing.Events);
@@ -88,6 +92,15 @@ public sealed class EndSessionTests
         Assert.NotNull(result.EndedAtUtc);
         Assert.Null(result.Error);
         Assert.Equal(EndSessionOutcome.Ended, result.Outcome);
+        var notification = Assert.IsType<SessionEndedNotification>(result.Notification);
+        Assert.Equal(start.SessionId.Value, notification.SessionId);
+        Assert.Equal(flowId, notification.FlowId);
+        Assert.Equal("operator-b", notification.EndedBy);
+        Assert.Equal("Operator", notification.ActorType);
+        Assert.Equal("completed", notification.Reason);
+        Assert.Equal("Active", notification.PreviousStatus);
+        Assert.Equal("Ended", notification.NewStatus);
+        Assert.Equal(result.EndedAtUtc, notification.OccurredAtUtc);
 
         Assert.NotNull(session);
         Assert.Equal("Ended", session.Status);
@@ -118,6 +131,7 @@ public sealed class EndSessionTests
         Assert.NotNull(session);
         var endedEvent = Assert.IsType<SessionEndedEvent>(session.Events[1]);
         Assert.Null(endedEvent.Reason);
+        Assert.NotNull(result.Notification);
     }
 
     [Fact]
@@ -138,6 +152,7 @@ public sealed class EndSessionTests
         Assert.Equal(EndSessionOutcome.AlreadyEnded, second.Outcome);
         Assert.Equal("Ended", second.Status);
         Assert.Equal(first.EndedAtUtc, second.EndedAtUtc);
+        Assert.Null(second.Notification);
 
         Assert.NotNull(session);
         Assert.Equal("Ended", session.Status);
@@ -178,6 +193,7 @@ public sealed class EndSessionTests
         Assert.Equal(EndSessionOutcome.AlreadyEnded, second.Outcome);
         Assert.Equal("Ended", second.Status);
         Assert.Equal(first.EndedAtUtc, second.EndedAtUtc);
+        Assert.Null(second.Notification);
 
         Assert.NotNull(session);
         var auditEvent = Assert.IsType<SessionEndAlreadyEndedAuditEvent>(session.Events[2]);
@@ -215,7 +231,11 @@ public sealed class EndSessionTests
         Assert.NotNull(session);
         Assert.Equal("Ended", session.Status);
         Assert.Equal(attemptCount + 1, session.Events.Count);
-        Assert.Single(results, result => result.Outcome == EndSessionOutcome.Ended);
+        var endedResult = Assert.Single(results, result => result.Outcome == EndSessionOutcome.Ended);
+        var endedNotification = Assert.IsType<SessionEndedNotification>(endedResult.Notification);
+        Assert.Equal(sessionId, endedNotification.SessionId);
+        Assert.Equal(flowId, endedNotification.FlowId);
+        Assert.Equal("Ended", endedNotification.NewStatus);
         Assert.Equal(attemptCount - 1, results.Count(result => result.Outcome == EndSessionOutcome.AlreadyEnded));
 
         var endedEvent = Assert.Single(session.Events.OfType<SessionEndedEvent>());
@@ -427,6 +447,7 @@ public sealed class EndSessionTests
         Assert.Equal(EndSessionOutcome.AlreadyEnded, second.Outcome);
         Assert.Equal("Ended", second.Status);
         Assert.Equal(first.EndedAtUtc, second.EndedAtUtc);
+        Assert.Null(second.Notification);
 
         Assert.NotNull(session);
         Assert.Equal("Ended", session.Status);

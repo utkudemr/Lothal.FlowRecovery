@@ -104,10 +104,12 @@ internal sealed class InMemorySessionStore
     public EndSessionOutcome TryEndSession(
         Guid sessionId,
         SessionEndMetadata endMetadata,
-        out SessionRecord? session)
+        out SessionRecord? session,
+        out SessionEndedEvent? endedEvent)
     {
         lock (_sync)
         {
+            endedEvent = null;
             SessionRecord? currentSession;
             if (!_sessions.TryGetValue(sessionId, out currentSession))
             {
@@ -137,6 +139,11 @@ internal sealed class InMemorySessionStore
 
             var endedAtUtc = DateTime.UtcNow;
             var ended = session.End(endMetadata, endedAtUtc);
+            if (ended)
+            {
+                endedEvent = session.Events[^1] as SessionEndedEvent;
+            }
+
             if (ended &&
                 _activeSessionByFlowId.TryGetValue(session.FlowId, out var activeSessionId) &&
                 activeSessionId == session.SessionId)

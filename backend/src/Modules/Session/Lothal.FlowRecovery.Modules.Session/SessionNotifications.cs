@@ -12,6 +12,22 @@ public sealed record StepChangedNotification(
     string? Reason,
     DateTime OccurredAtUtc) : SessionNotification(OccurredAtUtc);
 
+public sealed record SessionStartedNotification(
+    Guid SessionId,
+    string FlowId,
+    string StartedBy,
+    DateTime OccurredAtUtc) : SessionNotification(OccurredAtUtc);
+
+public sealed record SessionEndedNotification(
+    Guid SessionId,
+    string FlowId,
+    string EndedBy,
+    string ActorType,
+    string? Reason,
+    string PreviousStatus,
+    string NewStatus,
+    DateTime OccurredAtUtc) : SessionNotification(OccurredAtUtc);
+
 public static class SessionNotificationMapper
 {
     public static SessionNotification? Map(SessionEvent @event)
@@ -20,6 +36,11 @@ public static class SessionNotificationMapper
 
         return @event switch
         {
+            SessionStartedEvent startedEvent => new SessionStartedNotification(
+                startedEvent.SessionId,
+                startedEvent.FlowId,
+                startedEvent.StartedBy,
+                startedEvent.OccurredAtUtc),
             SessionCurrentStepSetEvent currentStepSetEvent => new StepChangedNotification(
                 currentStepSetEvent.SessionId,
                 currentStepSetEvent.FlowId,
@@ -29,6 +50,15 @@ public static class SessionNotificationMapper
                 currentStepSetEvent.ActorType,
                 currentStepSetEvent.Reason,
                 currentStepSetEvent.OccurredAtUtc),
+            SessionEndedEvent endedEvent => new SessionEndedNotification(
+                endedEvent.SessionId,
+                endedEvent.FlowId,
+                endedEvent.EndedBy,
+                endedEvent.ActorType,
+                endedEvent.Reason,
+                endedEvent.PreviousStatus,
+                endedEvent.NewStatus,
+                endedEvent.OccurredAtUtc),
             _ => throw new NotSupportedException($"Unsupported session event type: {@event.GetType().Name}."),
         };
     }

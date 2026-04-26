@@ -8,7 +8,8 @@ public sealed record StartSessionResult(
     string FlowId,
     string Status,
     DateTime? StartedAtUtc,
-    string? Error);
+    string? Error,
+    SessionNotification? Notification);
 
 internal sealed class StartSessionHandler
 {
@@ -26,12 +27,12 @@ internal sealed class StartSessionHandler
 
         if (string.IsNullOrWhiteSpace(flowId))
         {
-            return new StartSessionResult(false, null, string.Empty, "Rejected", null, "FlowId is required.");
+            return new StartSessionResult(false, null, string.Empty, "Rejected", null, "FlowId is required.", null);
         }
 
         if (string.IsNullOrWhiteSpace(startedBy))
         {
-            return new StartSessionResult(false, null, flowId, "Rejected", null, "StartedBy is required.");
+            return new StartSessionResult(false, null, flowId, "Rejected", null, "StartedBy is required.", null);
         }
 
         var startedAtUtc = DateTime.UtcNow;
@@ -41,9 +42,15 @@ internal sealed class StartSessionHandler
 
         if (!_store.TrySaveIfNoActiveSession(session))
         {
-            return new StartSessionResult(false, null, flowId, "Rejected", null, "Active session already exists.");
+            return new StartSessionResult(false, null, flowId, "Rejected", null, "Active session already exists.", null);
         }
 
-        return new StartSessionResult(true, session.SessionId, session.FlowId, session.Status, session.StartedAtUtc, null);
+        var notification = SessionNotificationMapper.Map(startedEvent);
+        if (notification is null)
+        {
+            throw new InvalidOperationException("Invariant violation: started outcome must produce a start-session notification.");
+        }
+
+        return new StartSessionResult(true, session.SessionId, session.FlowId, session.Status, session.StartedAtUtc, null, notification);
     }
 }
