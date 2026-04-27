@@ -19,6 +19,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflow", "Workflow", "{4A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lothal.FlowRecovery.Modules.Workflow", "src\Modules\Workflow\Lothal.FlowRecovery.Modules.Workflow\Lothal.FlowRecovery.Modules.Workflow.csproj", "{82E64591-C387-4A7A-AC05-22359B32B172}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lothal.FlowRecovery.Modules.Workflow.Tests", "tests\Lothal.FlowRecovery.Modules.Workflow.Tests\Lothal.FlowRecovery.Modules.Workflow.Tests.csproj", "{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -65,6 +67,18 @@ Global
 		{82E64591-C387-4A7A-AC05-22359B32B172}.Release|x64.Build.0 = Release|Any CPU
 		{82E64591-C387-4A7A-AC05-22359B32B172}.Release|x86.ActiveCfg = Release|Any CPU
 		{82E64591-C387-4A7A-AC05-22359B32B172}.Release|x86.Build.0 = Release|Any CPU
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Debug|x64.Build.0 = Debug|Any CPU
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Debug|x86.Build.0 = Debug|Any CPU
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Release|x64.ActiveCfg = Release|Any CPU
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Release|x64.Build.0 = Release|Any CPU
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Release|x86.ActiveCfg = Release|Any CPU
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -76,5 +90,6 @@ Global
 		{2D33DBCA-AA20-4642-BB44-E5E9FFE11932} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{4AE10D05-DD3E-F48E-F17B-B26EA748633E} = {EC447DCF-ABFA-6E24-52A5-D7FD48A5C558}
 		{82E64591-C387-4A7A-AC05-22359B32B172} = {4AE10D05-DD3E-F48E-F17B-B26EA748633E}
+		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal
