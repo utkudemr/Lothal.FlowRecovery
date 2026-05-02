@@ -351,6 +351,38 @@ public sealed class SetCurrentStepTests
     }
 
     [Fact]
+    public void SetCurrentStep_ShouldIgnoreWorkflowValidation_AndKeepEventHistoryAppendOnly()
+    {
+        var module = new SessionModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+
+        var first = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "unmapped-step-a", "operator-b", "System", null));
+        var second = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, "unmapped-step-b", "operator-c", "System", "retry"));
+        var session = module.GetSession(start.SessionId.Value);
+
+        Assert.True(first.Success);
+        Assert.Equal(SetCurrentStepOutcome.Changed, first.Outcome);
+        Assert.Equal("unmapped-step-a", first.CurrentStep);
+        Assert.NotNull(first.Notification);
+
+        Assert.True(second.Success);
+        Assert.Equal(SetCurrentStepOutcome.Changed, second.Outcome);
+        Assert.Equal("unmapped-step-b", second.CurrentStep);
+        Assert.NotNull(second.Notification);
+
+        Assert.NotNull(session);
+        Assert.Equal("unmapped-step-b", session.CurrentStep);
+        Assert.Equal(3, session.Events.Count);
+        Assert.IsType<SessionStartedEvent>(session.Events[0]);
+
+        var firstStepEvent = Assert.IsType<SessionCurrentStepSetEvent>(session.Events[1]);
+        var secondStepEvent = Assert.IsType<SessionCurrentStepSetEvent>(session.Events[2]);
+        Assert.Equal("unmapped-step-a", firstStepEvent.CurrentStep);
+        Assert.Equal("unmapped-step-b", secondStepEvent.CurrentStep);
+    }
+
+    [Fact]
     public void SetCurrentStep_ShouldReject_WhenChangedByIsMissing()
     {
         var module = new SessionModule();
