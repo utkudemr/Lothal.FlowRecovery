@@ -1,2 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\Workflow\Lothal.FlowRecovery.Modules.Workflow\Lothal.FlowRecovery.Modules.Workflow.csproj" />
+  </ItemGroup>
 </Project>

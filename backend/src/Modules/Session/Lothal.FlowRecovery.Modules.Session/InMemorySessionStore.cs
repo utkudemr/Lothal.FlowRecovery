@@ -66,19 +66,24 @@ internal sealed class InMemorySessionStore
 
     public SetCurrentStepOutcome TrySetCurrentStep(
         Guid sessionId,
+        ISessionCurrentStepValidator currentStepValidator,
         string currentStep,
         string changedBy,
         string actorType,
         string? reason,
         out SessionRecord? session,
-        out SessionCurrentStepSetEvent? stepSetEvent)
+        out SessionCurrentStepSetEvent? stepSetEvent,
+        out string? error)
     {
+        ArgumentNullException.ThrowIfNull(currentStepValidator);
+
         lock (_sync)
         {
             if (!_sessions.TryGetValue(sessionId, out var currentSession))
             {
                 session = null;
                 stepSetEvent = null;
+                error = "Session not found.";
                 return SetCurrentStepOutcome.NotFound;
             }
 
@@ -86,6 +91,7 @@ internal sealed class InMemorySessionStore
             if (session.Status != "Active")
             {
                 stepSetEvent = null;
+                error = "Session is not active.";
                 var rejectedOccurredAtUtc = DateTime.UtcNow;
                 if (session.EndedAtUtc.HasValue && rejectedOccurredAtUtc < session.EndedAtUtc.Value)
                 {
@@ -96,8 +102,8 @@ internal sealed class InMemorySessionStore
                 return SetCurrentStepOutcome.NotActive;
             }
 
-            var changed = session.SetCurrentStep(currentStep, changedBy, actorType, reason, DateTime.UtcNow, out stepSetEvent);
-            return changed ? SetCurrentStepOutcome.Changed : SetCurrentStepOutcome.Unchanged;
+            var stepValidation = currentStepValidator.Validate(session.FlowId, session.CurrentStep, currentStep);
+            return session.SetCurrentStep(stepValidation, currentStep, changedBy, actorType, reason, DateTime.UtcNow, out stepSetEvent, out error);
         }
     }
 

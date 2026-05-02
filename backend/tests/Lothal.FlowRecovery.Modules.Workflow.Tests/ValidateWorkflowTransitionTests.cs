@@ -46,6 +46,19 @@ public sealed class ValidateWorkflowTransitionTests
         Assert.Null(result.Error);
     }
 
+    [Fact]
+    public void ValidateTransition_ShouldReject_WhenCurrentAndTargetMatchButStepIsUndefined()
+    {
+        var module = new WorkflowModule();
+        var definition = CreateDefinition();
+
+        var result = module.ValidateTransition(definition, definition.FlowId, "Unknown", "Unknown");
+
+        Assert.False(result.Success);
+        Assert.Equal(ValidateWorkflowTransitionOutcome.Rejected, result.Outcome);
+        Assert.Equal("CurrentStep is not defined.", result.Error);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]

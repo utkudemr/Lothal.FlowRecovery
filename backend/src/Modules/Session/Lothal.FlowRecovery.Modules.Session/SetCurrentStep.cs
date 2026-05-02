@@ -19,19 +19,22 @@ public sealed record SetCurrentStepResult(
 
 public enum SetCurrentStepOutcome
 {
-    NotFound,
-    NotActive,
-    Unchanged,
-    Changed,
+    NotFound = 0,
+    NotActive = 1,
+    Unchanged = 2,
+    Changed = 3,
+    Rejected = 4,
 }
 
 internal sealed class SetCurrentStepHandler
 {
     private readonly InMemorySessionStore _store;
+    private readonly ISessionCurrentStepValidator _currentStepValidator;
 
-    public SetCurrentStepHandler(InMemorySessionStore store)
+    public SetCurrentStepHandler(InMemorySessionStore store, ISessionCurrentStepValidator currentStepValidator)
     {
         _store = store;
+        _currentStepValidator = currentStepValidator;
     }
 
     public SetCurrentStepResult Handle(SetCurrentStepCommand command)
@@ -85,18 +88,25 @@ internal sealed class SetCurrentStepHandler
 
         var outcome = _store.TrySetCurrentStep(
             command.SessionId,
+            _currentStepValidator,
             currentStep,
             changedBy,
             actorType,
             reason,
             out var session,
-            out var stepSetEvent);
+            out var stepSetEvent,
+            out var error);
         if (outcome == SetCurrentStepOutcome.NotActive)
         {
-            var error = actorType == "Operator" && reason is null
+            error = actorType == "Operator" && reason is null
                 ? "Reason is required for operator step change."
                 : "Session is not active.";
 
+            return new SetCurrentStepResult(false, session!.SessionId, session.FlowId, session.Status, session.CurrentStep, error, outcome, null);
+        }
+
+        if (outcome == SetCurrentStepOutcome.Rejected)
+        {
             return new SetCurrentStepResult(false, session!.SessionId, session.FlowId, session.Status, session.CurrentStep, error, outcome, null);
         }
 

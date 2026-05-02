@@ -61,6 +61,7 @@ public static class SessionNotificationMapper
                 endedEvent.OccurredAtUtc),
             SessionEndAlreadyEndedAuditEvent
             or SessionCurrentStepUnchangedEvent
+            or SessionCurrentStepRejectedWorkflowEvent
             or SessionCurrentStepRejectedNotActiveEvent => null,
             _ => throw new NotSupportedException(
                 $"Unsupported session event type: {@event.GetType().FullName}."),

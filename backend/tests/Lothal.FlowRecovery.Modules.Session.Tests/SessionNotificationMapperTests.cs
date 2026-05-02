@@ -179,6 +179,24 @@ public sealed class SessionNotificationMapperTests
     }
 
     [Fact]
+    public void Map_ShouldReturnNull_ForSessionCurrentStepRejectedWorkflowEvent()
+    {
+        var mapped = SessionNotificationMapper.Map(new SessionCurrentStepRejectedWorkflowEvent(
+            Guid.NewGuid(),
+            "flow-1",
+            "cart",
+            "payment",
+            "operator-b",
+            "Operator",
+            "invalid transition",
+            "Active",
+            "Transition is not allowed.",
+            new DateTime(2026, 4, 24, 20, 43, 0, DateTimeKind.Utc)));
+
+        Assert.Null(mapped);
+    }
+
+    [Fact]
     public void Map_ShouldThrowArgumentNullException_ForNullInput()
     {
         var exception = Assert.Throws<ArgumentNullException>(() => SessionNotificationMapper.Map(null!));
@@ -205,9 +223,11 @@ public sealed class SessionNotificationMapperTests
                     ? new SessionCurrentStepUnchangedEvent(Guid.NewGuid(), "flow-1", "cart", "payment", "operator-b", "Operator", null, "Unchanged", new DateTime(2026, 4, 24, 20, 41, 0, DateTimeKind.Utc))
                     : eventType == typeof(SessionCurrentStepRejectedNotActiveEvent)
                         ? new SessionCurrentStepRejectedNotActiveEvent(Guid.NewGuid(), "flow-1", "cart", "payment", "operator-b", "Operator", "session already ended", "Ended", new DateTime(2026, 4, 24, 20, 42, 0, DateTimeKind.Utc))
-                        : eventType == typeof(SessionEndedEvent)
-                            ? new SessionEndedEvent(Guid.NewGuid(), "flow-1", "operator-b", "System", null, "Active", "Ended", new DateTime(2026, 4, 24, 20, 35, 0, DateTimeKind.Utc))
-                            : eventType == typeof(SessionEndAlreadyEndedAuditEvent)
-                                ? new SessionEndAlreadyEndedAuditEvent(Guid.NewGuid(), "flow-1", "operator-b", "Operator", "duplicate", "Ended", DateTime.UtcNow, new DateTime(2026, 4, 24, 20, 40, 0, DateTimeKind.Utc))
-                                : throw new NotSupportedException($"Unsupported session event type: {eventType.FullName}");
+                        : eventType == typeof(SessionCurrentStepRejectedWorkflowEvent)
+                            ? new SessionCurrentStepRejectedWorkflowEvent(Guid.NewGuid(), "flow-1", "cart", "payment", "operator-b", "Operator", "invalid transition", "Active", "Transition is not allowed.", new DateTime(2026, 4, 24, 20, 43, 0, DateTimeKind.Utc))
+                            : eventType == typeof(SessionEndedEvent)
+                                ? new SessionEndedEvent(Guid.NewGuid(), "flow-1", "operator-b", "System", null, "Active", "Ended", new DateTime(2026, 4, 24, 20, 35, 0, DateTimeKind.Utc))
+                                : eventType == typeof(SessionEndAlreadyEndedAuditEvent)
+                                    ? new SessionEndAlreadyEndedAuditEvent(Guid.NewGuid(), "flow-1", "operator-b", "Operator", "duplicate", "Ended", DateTime.UtcNow, new DateTime(2026, 4, 24, 20, 40, 0, DateTimeKind.Utc))
+                                    : throw new NotSupportedException($"Unsupported session event type: {eventType.FullName}");
 }

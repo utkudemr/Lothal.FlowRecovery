@@ -76,13 +76,23 @@ public sealed class SessionRecord
             new List<SessionEvent> { startedEvent });
     }
 
-    public bool SetCurrentStep(string currentStep, string changedBy, string actorType, string? reason, DateTime occurredAtUtc, out SessionCurrentStepSetEvent? stepSetEvent)
+    internal SetCurrentStepOutcome SetCurrentStep(
+        SessionCurrentStepValidationResult stepValidation,
+        string currentStep,
+        string changedBy,
+        string actorType,
+        string? reason,
+        DateTime occurredAtUtc,
+        out SessionCurrentStepSetEvent? stepSetEvent,
+        out string? error)
     {
         stepSetEvent = null;
+        error = null;
 
         if (Status != "Active")
         {
-            return false;
+            error = "Session is not active.";
+            return SetCurrentStepOutcome.NotActive;
         }
 
         var normalizedCurrentStep = currentStep?.Trim() ?? string.Empty;
@@ -125,6 +135,21 @@ public sealed class SessionRecord
             normalizedReason = null;
         }
 
+        ArgumentNullException.ThrowIfNull(stepValidation);
+
+        if (!stepValidation.Success)
+        {
+            RecordCurrentStepRejectedWorkflow(
+                normalizedCurrentStep,
+                normalizedChangedBy,
+                normalizedActorType,
+                normalizedReason,
+                stepValidation.Error ?? "Workflow transition rejected.",
+                occurredAtUtc);
+            error = stepValidation.Error;
+            return SetCurrentStepOutcome.Rejected;
+        }
+
         if (CurrentStep == normalizedCurrentStep)
         {
             _events.Add(new SessionCurrentStepUnchangedEvent(
@@ -137,7 +162,7 @@ public sealed class SessionRecord
                 normalizedReason,
                 "Unchanged",
                 occurredAtUtc));
-            return false;
+            return SetCurrentStepOutcome.Unchanged;
         }
 
         var previousStep = CurrentStep;
@@ -152,7 +177,36 @@ public sealed class SessionRecord
             CurrentStep,
             occurredAtUtc);
         _events.Add(stepSetEvent);
-        return true;
+        return SetCurrentStepOutcome.Changed;
+    }
+
+    public void RecordCurrentStepRejectedWorkflow(
+        string currentStep,
+        string changedBy,
+        string actorType,
+        string? reason,
+        string workflowError,
+        DateTime occurredAtUtc)
+    {
+        var audit = NormalizeCurrentStepRejectionAudit(currentStep, changedBy, actorType, reason, occurredAtUtc, clampToEndedAtUtc: false);
+
+        var normalizedWorkflowError = workflowError?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedWorkflowError))
+        {
+            throw new ArgumentException("Workflow error is required.", nameof(workflowError));
+        }
+
+        _events.Add(new SessionCurrentStepRejectedWorkflowEvent(
+            SessionId,
+            FlowId,
+            CurrentStep,
+            audit.RequestedStep,
+            audit.ChangedBy,
+            audit.ActorType,
+            audit.Reason,
+            Status,
+            normalizedWorkflowError,
+            audit.OccurredAtUtc));
     }
 
     public void RecordCurrentStepRejectedNotActive(
@@ -162,61 +216,18 @@ public sealed class SessionRecord
         string? reason,
         DateTime occurredAtUtc)
     {
-        var normalizedRequestedStep = currentStep?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(normalizedRequestedStep))
-        {
-            throw new ArgumentException("Current step is required.", nameof(currentStep));
-        }
-
-        if (occurredAtUtc == default)
-        {
-            throw new ArgumentException("Current step timestamp is required.", nameof(occurredAtUtc));
-        }
-
-        if (occurredAtUtc < StartedAtUtc)
-        {
-            throw new ArgumentException("Current step timestamp cannot be earlier than the session start timestamp.", nameof(occurredAtUtc));
-        }
-
-        var normalizedChangedBy = changedBy?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(normalizedChangedBy))
-        {
-            throw new ArgumentException("ChangedBy is required.", nameof(changedBy));
-        }
-
-        var trimmedActorType = actorType?.Trim();
-        if (string.IsNullOrWhiteSpace(trimmedActorType))
-        {
-            throw new ArgumentException("ActorType is required.", nameof(actorType));
-        }
-
-        var normalizedActorType = NormalizeActorType(trimmedActorType);
-        if (normalizedActorType is null)
-        {
-            throw new ArgumentException("ActorType is invalid.", nameof(actorType));
-        }
-
-        var normalizedReason = reason?.Trim();
-        if (string.IsNullOrWhiteSpace(normalizedReason))
-        {
-            normalizedReason = null;
-        }
-
-        if (EndedAtUtc.HasValue && occurredAtUtc < EndedAtUtc.Value)
-        {
-            occurredAtUtc = EndedAtUtc.Value;
-        }
+        var audit = NormalizeCurrentStepRejectionAudit(currentStep, changedBy, actorType, reason, occurredAtUtc, clampToEndedAtUtc: true);
 
         _events.Add(new SessionCurrentStepRejectedNotActiveEvent(
             SessionId,
             FlowId,
             CurrentStep,
-            normalizedRequestedStep,
-            normalizedChangedBy,
-            normalizedActorType,
-            normalizedReason,
+            audit.RequestedStep,
+            audit.ChangedBy,
+            audit.ActorType,
+            audit.Reason,
             Status,
-            occurredAtUtc));
+            audit.OccurredAtUtc));
     }
 
     public bool End(SessionEndMetadata endMetadata, DateTime endedAtUtc)
@@ -307,6 +318,74 @@ public sealed class SessionRecord
 
         return null;
     }
+
+    private CurrentStepRejectionAudit NormalizeCurrentStepRejectionAudit(
+        string currentStep,
+        string changedBy,
+        string actorType,
+        string? reason,
+        DateTime occurredAtUtc,
+        bool clampToEndedAtUtc)
+    {
+        var normalizedRequestedStep = currentStep?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedRequestedStep))
+        {
+            throw new ArgumentException("Current step is required.", nameof(currentStep));
+        }
+
+        if (occurredAtUtc == default)
+        {
+            throw new ArgumentException("Current step timestamp is required.", nameof(occurredAtUtc));
+        }
+
+        if (occurredAtUtc < StartedAtUtc)
+        {
+            throw new ArgumentException("Current step timestamp cannot be earlier than the session start timestamp.", nameof(occurredAtUtc));
+        }
+
+        var normalizedChangedBy = changedBy?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedChangedBy))
+        {
+            throw new ArgumentException("ChangedBy is required.", nameof(changedBy));
+        }
+
+        var trimmedActorType = actorType?.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedActorType))
+        {
+            throw new ArgumentException("ActorType is required.", nameof(actorType));
+        }
+
+        var normalizedActorType = NormalizeActorType(trimmedActorType);
+        if (normalizedActorType is null)
+        {
+            throw new ArgumentException("ActorType is invalid.", nameof(actorType));
+        }
+
+        var normalizedReason = reason?.Trim();
+        if (string.IsNullOrWhiteSpace(normalizedReason))
+        {
+            normalizedReason = null;
+        }
+
+        if (clampToEndedAtUtc && EndedAtUtc.HasValue && occurredAtUtc < EndedAtUtc.Value)
+        {
+            occurredAtUtc = EndedAtUtc.Value;
+        }
+
+        return new CurrentStepRejectionAudit(
+            normalizedRequestedStep,
+            normalizedChangedBy,
+            normalizedActorType,
+            normalizedReason,
+            occurredAtUtc);
+    }
+
+    private sealed record CurrentStepRejectionAudit(
+        string RequestedStep,
+        string ChangedBy,
+        string ActorType,
+        string? Reason,
+        DateTime OccurredAtUtc);
 }
 
 public abstract record SessionEvent(DateTime OccurredAtUtc);
@@ -347,7 +426,29 @@ public sealed record SessionCurrentStepRejectedNotActiveEvent(
     string ActorType,
     string? Reason,
     string CurrentStatus,
-    DateTime OccurredAtUtc) : SessionEvent(OccurredAtUtc);
+    DateTime OccurredAtUtc) : SessionEvent(OccurredAtUtc)
+{
+    public string Outcome => "Rejected";
+
+    public string RejectionCategory => "SessionNotActive";
+}
+
+public sealed record SessionCurrentStepRejectedWorkflowEvent(
+    Guid SessionId,
+    string FlowId,
+    string? CurrentStep,
+    string RequestedStep,
+    string ChangedBy,
+    string ActorType,
+    string? Reason,
+    string CurrentStatus,
+    string WorkflowError,
+    DateTime OccurredAtUtc) : SessionEvent(OccurredAtUtc)
+{
+    public string Outcome => "Rejected";
+
+    public string RejectionCategory => "WorkflowTransition";
+}
 
 public sealed record SessionEndedEvent(
     Guid SessionId,

@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Modules\Session\Lothal.FlowRecovery.Modules.Session\Lothal.FlowRecovery.Modules.Session.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Workflow\Lothal.FlowRecovery.Modules.Workflow\Lothal.FlowRecovery.Modules.Workflow.csproj" />
   </ItemGroup>
 
 </Project>
