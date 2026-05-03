@@ -70,7 +70,7 @@ public sealed class RealtimeModuleTests
     }
 
     [Fact]
-    public void Publish_ShouldHandleConcurrentSubscribePublishAndDispose_WithoutDeadlock()
+    public async Task Publish_ShouldHandleConcurrentSubscribePublishAndDispose_WithoutDeadlock()
     {
         var module = new RealtimeModule();
         var exceptions = new ConcurrentQueue<Exception>();
@@ -109,9 +109,7 @@ public sealed class RealtimeModuleTests
             }
         });
 
-        var completed = Task.WhenAll(publishTask, mutationTask).Wait(TimeSpan.FromSeconds(5));
-
-        Assert.True(completed);
+        await Task.WhenAll(publishTask, mutationTask).WaitAsync(TimeSpan.FromSeconds(5));
         Assert.True(exceptions.IsEmpty);
         Assert.True(notificationsSeen > 0);
     }
@@ -137,6 +135,85 @@ public sealed class RealtimeModuleTests
 
         Assert.Equal(1, Volatile.Read(ref firstDelivered));
         Assert.Equal(2, Volatile.Read(ref secondDelivered));
+    }
+
+    [Fact]
+    public void Publish_ShouldDeliverCurrentNotification_WhenHandlerUnsubscribesAnotherSubscriber()
+    {
+        var module = new RealtimeModule();
+        var firstDelivered = 0;
+        var secondDelivered = 0;
+        IDisposable? secondSubscription = null;
+
+        module.Subscribe(_ =>
+        {
+            Interlocked.Increment(ref firstDelivered);
+            secondSubscription!.Dispose();
+        });
+
+        secondSubscription = module.Subscribe(_ => Interlocked.Increment(ref secondDelivered));
+
+        module.Publish(CreateNotification());
+        module.Publish(CreateNotification());
+
+        Assert.Equal(2, Volatile.Read(ref firstDelivered));
+        Assert.Equal(1, Volatile.Read(ref secondDelivered));
+    }
+
+    [Fact]
+    public async Task Publish_ShouldHandleConcurrentPublishesWithSubscribeDisposeChurn_WithoutDeadlockOrInternalExceptions()
+    {
+        var module = new RealtimeModule();
+        var exceptions = new ConcurrentQueue<Exception>();
+        var notificationsSeen = 0;
+        using var startGate = new ManualResetEventSlim();
+        using var stableSubscription = module.Subscribe(_ => Interlocked.Increment(ref notificationsSeen));
+
+        const int publisherCount = 4;
+        const int publishIterations = 200;
+        const int mutationIterations = 500;
+
+        var publishTasks = Enumerable.Range(0, publisherCount)
+            .Select(_ => Task.Run(() =>
+            {
+                try
+                {
+                    startGate.Wait();
+
+                    for (var i = 0; i < publishIterations; i++)
+                    {
+                        module.Publish(CreateNotification());
+                    }
+                }
+                catch (Exception exception)
+                {
+                    exceptions.Enqueue(exception);
+                }
+            }))
+            .ToArray();
+
+        var mutationTask = Task.Run(() =>
+        {
+            try
+            {
+                startGate.Wait();
+
+                for (var i = 0; i < mutationIterations; i++)
+                {
+                    var subscription = module.Subscribe(_ => { });
+                    subscription.Dispose();
+                }
+            }
+            catch (Exception exception)
+            {
+                exceptions.Enqueue(exception);
+            }
+        });
+
+        startGate.Set();
+        await Task.WhenAll(publishTasks.Append(mutationTask)).WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(exceptions.IsEmpty);
+        Assert.Equal(publisherCount * publishIterations, Volatile.Read(ref notificationsSeen));
     }
 
     [Fact]
