@@ -21,6 +21,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lothal.FlowRecovery.Modules
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lothal.FlowRecovery.Modules.Workflow.Tests", "tests\Lothal.FlowRecovery.Modules.Workflow.Tests\Lothal.FlowRecovery.Modules.Workflow.Tests.csproj", "{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Realtime", "Realtime", "{31B07BCB-E584-40DA-BF23-E0E3E952582B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lothal.FlowRecovery.Modules.Realtime", "src\Modules\Realtime\Lothal.FlowRecovery.Modules.Realtime\Lothal.FlowRecovery.Modules.Realtime.csproj", "{B3A1D313-6EF9-4FF2-A329-A07D38511612}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lothal.FlowRecovery.Modules.Realtime.Tests", "tests\Lothal.FlowRecovery.Modules.Realtime.Tests\Lothal.FlowRecovery.Modules.Realtime.Tests.csproj", "{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,6 +85,30 @@ Global
 		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Release|x64.Build.0 = Release|Any CPU
 		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Release|x86.ActiveCfg = Release|Any CPU
 		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676}.Release|x86.Build.0 = Release|Any CPU
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612}.Debug|x64.Build.0 = Debug|Any CPU
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612}.Debug|x86.Build.0 = Debug|Any CPU
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612}.Release|x64.ActiveCfg = Release|Any CPU
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612}.Release|x64.Build.0 = Release|Any CPU
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612}.Release|x86.ActiveCfg = Release|Any CPU
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612}.Release|x86.Build.0 = Release|Any CPU
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}.Debug|x64.Build.0 = Debug|Any CPU
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}.Debug|x86.Build.0 = Debug|Any CPU
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}.Release|x64.ActiveCfg = Release|Any CPU
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}.Release|x64.Build.0 = Release|Any CPU
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}.Release|x86.ActiveCfg = Release|Any CPU
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -91,5 +121,8 @@ Global
 		{4AE10D05-DD3E-F48E-F17B-B26EA748633E} = {EC447DCF-ABFA-6E24-52A5-D7FD48A5C558}
 		{82E64591-C387-4A7A-AC05-22359B32B172} = {4AE10D05-DD3E-F48E-F17B-B26EA748633E}
 		{0C70338E-5BF6-4D7D-9ED8-3A0717E62676} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{31B07BCB-E584-40DA-BF23-E0E3E952582B} = {EC447DCF-ABFA-6E24-52A5-D7FD48A5C558}
+		{B3A1D313-6EF9-4FF2-A329-A07D38511612} = {31B07BCB-E584-40DA-BF23-E0E3E952582B}
+		{22D6F13F-2141-4C94-B6D7-3D376E7CFDD7} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal
