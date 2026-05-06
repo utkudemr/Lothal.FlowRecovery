@@ -10,7 +10,7 @@ public sealed class SessionModule
   private readonly EndSessionHandler _endSessionHandler;
 
   public SessionModule()
-    : this(AllowAnySessionCurrentStepValidator.Instance)
+    : this(EmptyWorkflowDefinitionProvider.Instance)
   {
   }
 
@@ -69,11 +69,6 @@ public sealed record SessionSnapshot(
   DateTime? EndedAtUtc,
   IReadOnlyList<SessionEvent> Events);
 
-public interface IWorkflowDefinitionProvider
-{
-  WorkflowDefinition? GetDefinition(string flowId);
-}
-
 internal interface ISessionCurrentStepValidator
 {
   SessionCurrentStepValidationResult Validate(string flowId, string? currentStep, string targetStep);
@@ -89,17 +84,17 @@ internal sealed record SessionCurrentStepValidationResult(bool Success, string? 
   }
 }
 
-internal sealed class AllowAnySessionCurrentStepValidator : ISessionCurrentStepValidator
+internal sealed class EmptyWorkflowDefinitionProvider : IWorkflowDefinitionProvider
 {
-  public static readonly AllowAnySessionCurrentStepValidator Instance = new();
+  public static readonly EmptyWorkflowDefinitionProvider Instance = new();
 
-  private AllowAnySessionCurrentStepValidator()
+  private EmptyWorkflowDefinitionProvider()
   {
   }
 
-  public SessionCurrentStepValidationResult Validate(string flowId, string? currentStep, string targetStep)
+  public WorkflowDefinition? GetDefinition(string flowId)
   {
-    return SessionCurrentStepValidationResult.Allowed;
+    return null;
   }
 }
 

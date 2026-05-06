@@ -677,7 +677,7 @@ public sealed class SetCurrentStepTests
     }
 
     [Fact]
-    public void SetCurrentStep_DefaultConstructorShouldAllowStepChangeWithoutWorkflowDefinition()
+    public void SetCurrentStep_DefaultConstructorShouldRejectStepChangeWithoutWorkflowDefinition()
     {
         var flowId = $"flow-{Guid.NewGuid():N}";
         var module = new SessionModule();
@@ -686,17 +686,25 @@ public sealed class SetCurrentStepTests
         var result = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "payment", "operator-b", "System", null));
         var session = module.GetSession(start.SessionId.Value);
 
-        Assert.True(result.Success);
-        Assert.Equal(SetCurrentStepOutcome.Changed, result.Outcome);
-        Assert.Null(result.Error);
-        Assert.Equal("payment", result.CurrentStep);
-        Assert.NotNull(result.Notification);
+        Assert.False(result.Success);
+        Assert.Equal(SetCurrentStepOutcome.Rejected, result.Outcome);
+        Assert.Equal("Workflow definition not found.", result.Error);
+        Assert.Null(result.CurrentStep);
+        Assert.Null(result.Notification);
 
         Assert.NotNull(session);
-        Assert.Equal("payment", session.CurrentStep);
+        Assert.Null(session.CurrentStep);
         Assert.Equal(2, session.Events.Count);
-        Assert.IsType<SessionCurrentStepSetEvent>(session.Events[1]);
-        Assert.Empty(session.Events.OfType<SessionCurrentStepRejectedWorkflowEvent>());
+        var rejectedEvent = Assert.IsType<SessionCurrentStepRejectedWorkflowEvent>(session.Events[1]);
+        Assert.Null(rejectedEvent.CurrentStep);
+        Assert.Equal("payment", rejectedEvent.RequestedStep);
+        Assert.Equal("operator-b", rejectedEvent.ChangedBy);
+        Assert.Equal("System", rejectedEvent.ActorType);
+        Assert.Null(rejectedEvent.Reason);
+        Assert.Equal("Active", rejectedEvent.CurrentStatus);
+        Assert.Equal("Workflow definition not found.", rejectedEvent.WorkflowError);
+        Assert.Equal("Rejected", rejectedEvent.Outcome);
+        Assert.Equal("WorkflowTransition", rejectedEvent.RejectionCategory);
     }
 
     [Fact]

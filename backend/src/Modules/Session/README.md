@@ -5,6 +5,7 @@ This module provides an in-memory session workflow for recovery of stuck sales f
 It supports:
 - starting a session for a flow
 - updating the current step while the session is active; unchanged steps record a no-op `SessionCurrentStepUnchangedEvent`, do not change state, and do not emit a notification
+- default construction still routes `SetCurrentStep` through workflow validation; without a workflow definition the command is rejected and a `SessionCurrentStepRejectedWorkflowEvent` is appended
 - ending a session with operator/system metadata
 - reading session snapshots with append-only event history
 - mapping notifications only for domain-state-changing events: `SessionStartedEvent`, `SessionCurrentStepSetEvent`, and `SessionEndedEvent`; audit, no-op, and rejected events are safely ignored by the mapper
