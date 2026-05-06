@@ -6,12 +6,18 @@ internal sealed class InMemorySessionStore
     private readonly Dictionary<Guid, SessionRecord> _sessions = new();
     private readonly Dictionary<string, Guid> _activeSessionByFlowId = new(StringComparer.OrdinalIgnoreCase);
 
-    public bool TrySaveIfNoActiveSession(SessionRecord session)
+    public bool TrySaveIfNoActiveSession(SessionRecord session, string duplicateRequestedBy)
     {
         lock (_sync)
         {
             if (_activeSessionByFlowId.ContainsKey(session.FlowId))
             {
+                if (_activeSessionByFlowId.TryGetValue(session.FlowId, out var activeSessionId) &&
+                    _sessions.TryGetValue(activeSessionId, out var activeSession))
+                {
+                    activeSession.RecordDuplicateStartAudit(duplicateRequestedBy, DateTime.UtcNow);
+                }
+
                 return false;
             }
 

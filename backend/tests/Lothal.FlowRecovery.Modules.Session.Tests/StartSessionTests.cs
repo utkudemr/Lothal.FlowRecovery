@@ -39,11 +39,23 @@ public sealed class StartSessionTests
 
         var first = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
         var second = module.StartSession(new StartSessionCommand(flowId, "operator-b"));
+        var session = module.GetSession(first.SessionId!.Value);
 
         Assert.True(first.Success);
         Assert.False(second.Success);
         Assert.Equal("Active session already exists.", second.Error);
         Assert.Null(second.Notification);
+        Assert.NotNull(session);
+        Assert.Equal("Active", session.Status);
+        Assert.Equal(2, session.Events.Count);
+        Assert.IsType<SessionStartedEvent>(session.Events[0]);
+
+        var duplicateAuditEvent = Assert.IsType<SessionStartDuplicateAuditEvent>(session.Events[1]);
+        Assert.Equal(first.SessionId.Value, duplicateAuditEvent.SessionId);
+        Assert.Equal(flowId, duplicateAuditEvent.FlowId);
+        Assert.Equal("operator-b", duplicateAuditEvent.RequestedBy);
+        Assert.Equal("Active", duplicateAuditEvent.CurrentStatus);
+        Assert.True(duplicateAuditEvent.OccurredAtUtc >= first.StartedAtUtc);
     }
 
     [Fact]

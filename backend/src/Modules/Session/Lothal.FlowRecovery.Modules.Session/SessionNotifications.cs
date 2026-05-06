@@ -60,6 +60,7 @@ public static class SessionNotificationMapper
                 endedEvent.NewStatus,
                 endedEvent.OccurredAtUtc),
             SessionEndAlreadyEndedAuditEvent
+            or SessionStartDuplicateAuditEvent
             or SessionCurrentStepUnchangedEvent
             or SessionCurrentStepRejectedWorkflowEvent
             or SessionCurrentStepRejectedNotActiveEvent => null,

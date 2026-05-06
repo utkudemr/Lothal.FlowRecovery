@@ -304,6 +304,37 @@ public sealed class SessionRecord
             occurredAtUtc));
     }
 
+    public void RecordDuplicateStartAudit(string requestedBy, DateTime occurredAtUtc)
+    {
+        if (Status != "Active")
+        {
+            throw new InvalidOperationException("Duplicate start audit can only be recorded for active sessions.");
+        }
+
+        var normalizedRequestedBy = requestedBy?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedRequestedBy))
+        {
+            throw new ArgumentException("RequestedBy is required.", nameof(requestedBy));
+        }
+
+        if (occurredAtUtc == default)
+        {
+            throw new ArgumentException("Audit timestamp is required.", nameof(occurredAtUtc));
+        }
+
+        if (occurredAtUtc < StartedAtUtc)
+        {
+            throw new ArgumentException("Audit timestamp cannot be earlier than the session start timestamp.", nameof(occurredAtUtc));
+        }
+
+        _events.Add(new SessionStartDuplicateAuditEvent(
+            SessionId,
+            FlowId,
+            normalizedRequestedBy,
+            Status,
+            occurredAtUtc));
+    }
+
     private static string? NormalizeActorType(string actorType)
     {
         if (string.Equals(actorType, "Operator", StringComparison.OrdinalIgnoreCase))
@@ -468,4 +499,11 @@ public sealed record SessionEndAlreadyEndedAuditEvent(
     string? Reason,
     string CurrentStatus,
     DateTime? ExistingEndedAtUtc,
+    DateTime OccurredAtUtc) : SessionEvent(OccurredAtUtc);
+
+public sealed record SessionStartDuplicateAuditEvent(
+    Guid SessionId,
+    string FlowId,
+    string RequestedBy,
+    string CurrentStatus,
     DateTime OccurredAtUtc) : SessionEvent(OccurredAtUtc);

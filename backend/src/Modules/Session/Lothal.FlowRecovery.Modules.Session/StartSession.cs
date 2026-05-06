@@ -40,7 +40,7 @@ internal sealed class StartSessionHandler
         var startedEvent = new SessionStartedEvent(sessionId, flowId, startedBy, startedAtUtc);
         var session = SessionRecord.Create(sessionId, flowId, startedBy, startedAtUtc, startedEvent);
 
-        if (!_store.TrySaveIfNoActiveSession(session))
+        if (!_store.TrySaveIfNoActiveSession(session, startedBy))
         {
             return new StartSessionResult(false, null, flowId, "Rejected", null, "Active session already exists.", null);
         }

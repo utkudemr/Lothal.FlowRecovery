@@ -225,9 +225,11 @@ public sealed class SessionNotificationMapperTests
                         ? new SessionCurrentStepRejectedNotActiveEvent(Guid.NewGuid(), "flow-1", "cart", "payment", "operator-b", "Operator", "session already ended", "Ended", new DateTime(2026, 4, 24, 20, 42, 0, DateTimeKind.Utc))
                         : eventType == typeof(SessionCurrentStepRejectedWorkflowEvent)
                             ? new SessionCurrentStepRejectedWorkflowEvent(Guid.NewGuid(), "flow-1", "cart", "payment", "operator-b", "Operator", "invalid transition", "Active", "Transition is not allowed.", new DateTime(2026, 4, 24, 20, 43, 0, DateTimeKind.Utc))
-                            : eventType == typeof(SessionEndedEvent)
+                : eventType == typeof(SessionEndedEvent)
                                 ? new SessionEndedEvent(Guid.NewGuid(), "flow-1", "operator-b", "System", null, "Active", "Ended", new DateTime(2026, 4, 24, 20, 35, 0, DateTimeKind.Utc))
-                                : eventType == typeof(SessionEndAlreadyEndedAuditEvent)
+                                : eventType == typeof(SessionStartDuplicateAuditEvent)
+                                    ? new SessionStartDuplicateAuditEvent(Guid.NewGuid(), "flow-1", "operator-b", "Active", new DateTime(2026, 4, 24, 20, 40, 0, DateTimeKind.Utc))
+                                    : eventType == typeof(SessionEndAlreadyEndedAuditEvent)
                                     ? new SessionEndAlreadyEndedAuditEvent(Guid.NewGuid(), "flow-1", "operator-b", "Operator", "duplicate", "Ended", DateTime.UtcNow, new DateTime(2026, 4, 24, 20, 40, 0, DateTimeKind.Utc))
                                     : throw new NotSupportedException($"Unsupported session event type: {eventType.FullName}");
 }
