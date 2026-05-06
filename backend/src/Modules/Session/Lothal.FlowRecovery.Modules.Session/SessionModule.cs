@@ -111,24 +111,9 @@ internal sealed class WorkflowSessionCurrentStepValidator : ISessionCurrentStepV
 
   public SessionCurrentStepValidationResult Validate(string flowId, string? currentStep, string targetStep)
   {
-    var workflowDefinition = _workflowDefinitions.GetDefinition(flowId);
-    if (workflowDefinition is null)
-    {
-      return SessionCurrentStepValidationResult.Rejected("Workflow definition not found.");
-    }
-
-    var normalizedTargetStep = targetStep?.Trim() ?? string.Empty;
-    if (string.IsNullOrWhiteSpace(currentStep))
-    {
-      var initialStepValidation = ValidateWorkflowInitialStep.Validate(workflowDefinition, flowId, normalizedTargetStep);
-      return initialStepValidation.Outcome == ValidateWorkflowInitialStepOutcome.Rejected
-        ? SessionCurrentStepValidationResult.Rejected(initialStepValidation.Error ?? "Workflow transition rejected.")
-        : SessionCurrentStepValidationResult.Allowed;
-    }
-
-    var transitionValidation = ValidateWorkflowTransition.Validate(workflowDefinition, flowId, currentStep, normalizedTargetStep);
-    return transitionValidation.Outcome == ValidateWorkflowTransitionOutcome.Rejected
-      ? SessionCurrentStepValidationResult.Rejected(transitionValidation.Error ?? "Workflow transition rejected.")
-      : SessionCurrentStepValidationResult.Allowed;
+    var validation = ValidateWorkflowCurrentStep.Validate(_workflowDefinitions, flowId, currentStep, targetStep);
+    return validation.Success
+      ? SessionCurrentStepValidationResult.Allowed
+      : SessionCurrentStepValidationResult.Rejected(validation.Error ?? "Workflow transition rejected.");
   }
 }
