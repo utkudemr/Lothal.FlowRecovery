@@ -5,6 +5,73 @@ namespace Lothal.FlowRecovery.Modules.Workflow.Tests;
 public sealed class ValidateWorkflowTransitionTests
 {
     [Fact]
+    public void ValidateInitialStep_ShouldAllow_WhenTargetIsWorkflowStartStep()
+    {
+        var definition = CreateDefinition();
+
+        var result = ValidateWorkflowInitialStep.Validate(definition, definition.FlowId, "Draft");
+
+        Assert.True(result.Success);
+        Assert.Equal(ValidateWorkflowInitialStepOutcome.Allowed, result.Outcome);
+        Assert.Null(result.Error);
+    }
+
+    [Fact]
+    public void ValidateInitialStep_ShouldReject_WhenTargetIsNotWorkflowStartStep()
+    {
+        var definition = CreateDefinition();
+
+        var result = ValidateWorkflowInitialStep.Validate(definition, definition.FlowId, "Review");
+
+        Assert.False(result.Success);
+        Assert.Equal(ValidateWorkflowInitialStepOutcome.Rejected, result.Outcome);
+        Assert.Equal("TargetStep must be workflow start step.", result.Error);
+    }
+
+    [Fact]
+    public void ValidateInitialStep_ShouldReject_WhenFlowIdDoesNotMatchDefinition()
+    {
+        var definition = CreateDefinition(flowId: "flow-a");
+
+        var result = ValidateWorkflowInitialStep.Validate(definition, "flow-b", "Draft");
+
+        Assert.False(result.Success);
+        Assert.Equal(ValidateWorkflowInitialStepOutcome.Rejected, result.Outcome);
+        Assert.Equal("Workflow definition does not match FlowId.", result.Error);
+    }
+
+    [Fact]
+    public void ValidateInitialStep_ShouldReject_WhenTargetStepIsUndefined()
+    {
+        var definition = CreateDefinition();
+
+        var result = ValidateWorkflowInitialStep.Validate(definition, definition.FlowId, "Unknown");
+
+        Assert.False(result.Success);
+        Assert.Equal(ValidateWorkflowInitialStepOutcome.Rejected, result.Outcome);
+        Assert.Equal("TargetStep is not defined.", result.Error);
+    }
+
+    [Fact]
+    public void ValidateInitialStep_ShouldReject_WhenWorkflowHasMultipleStartCandidates()
+    {
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var definition = new WorkflowDefinition(
+            flowId,
+            new[] { "Draft", "Review", "Closed" },
+            new Dictionary<string, IReadOnlyCollection<string>>
+            {
+                ["Draft"] = Array.Empty<string>(),
+            });
+
+        var result = ValidateWorkflowInitialStep.Validate(definition, flowId, "Draft");
+
+        Assert.False(result.Success);
+        Assert.Equal(ValidateWorkflowInitialStepOutcome.Rejected, result.Outcome);
+        Assert.Equal("Workflow definition is incomplete.", result.Error);
+    }
+
+    [Fact]
     public void ValidateTransition_ShouldAllow_WhenTransitionIsAllowed()
     {
         var module = new WorkflowModule();
@@ -135,6 +202,8 @@ public sealed class ValidateWorkflowTransitionTests
         var transitions = new Dictionary<string, IReadOnlyCollection<string>>
         {
             ["Draft"] = useNullAllowedTargets ? null! : allowedTargets ?? new[] { "Review" },
+            ["Review"] = new[] { "Closed" },
+            ["Closed"] = Array.Empty<string>(),
         };
 
         return new WorkflowDefinition(resolvedFlowId, steps, transitions);
