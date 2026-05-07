@@ -55,6 +55,17 @@ public sealed class RealtimeModule
         }
     }
 
+    public bool TryPublish(SessionNotification? notification)
+    {
+        if (notification is null)
+        {
+            return false;
+        }
+
+        Publish(notification);
+        return true;
+    }
+
     private void Unsubscribe(Subscription subscription)
     {
         lock (_gate)

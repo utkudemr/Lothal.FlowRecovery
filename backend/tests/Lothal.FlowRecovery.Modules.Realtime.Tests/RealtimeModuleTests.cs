@@ -21,6 +21,35 @@ public sealed class RealtimeModuleTests
     }
 
     [Fact]
+    public void TryPublish_ShouldDeliverNotification_ToSubscriber()
+    {
+        var module = new RealtimeModule();
+        var notification = CreateNotification();
+        SessionNotification? delivered = null;
+
+        module.Subscribe(received => delivered = received);
+
+        var published = module.TryPublish(notification);
+
+        Assert.True(published);
+        Assert.Same(notification, delivered);
+    }
+
+    [Fact]
+    public void TryPublish_ShouldReturnFalse_AndNotDeliver_WhenNotificationIsNull()
+    {
+        var module = new RealtimeModule();
+        var deliveredCount = 0;
+
+        module.Subscribe(_ => deliveredCount++);
+
+        var published = module.TryPublish(null);
+
+        Assert.False(published);
+        Assert.Equal(0, deliveredCount);
+    }
+
+    [Fact]
     public void Publish_ShouldNotDeliverNotification_AfterUnsubscribe()
     {
         var module = new RealtimeModule();
@@ -48,6 +77,39 @@ public sealed class RealtimeModuleTests
 
         Assert.Same(notification, first);
         Assert.Same(notification, second);
+    }
+
+    [Fact]
+    public void TryPublish_ShouldDeliverStartSessionNotification_FromSessionModule()
+    {
+        var realtime = new RealtimeModule();
+        var session = new SessionModule();
+        SessionNotification? delivered = null;
+
+        realtime.Subscribe(notification => delivered = notification);
+
+        var result = session.StartSession(new StartSessionCommand($"flow-{Guid.NewGuid():N}", "operator-a"));
+
+        Assert.True(realtime.TryPublish(result.Notification));
+        Assert.IsType<SessionStartedNotification>(delivered);
+        Assert.Same(result.Notification, delivered);
+    }
+
+    [Fact]
+    public void TryPublish_ShouldDeliverEndSessionNotification_FromSessionModule()
+    {
+        var realtime = new RealtimeModule();
+        var session = new SessionModule();
+        SessionNotification? delivered = null;
+
+        realtime.Subscribe(notification => delivered = notification);
+
+        var started = session.StartSession(new StartSessionCommand($"flow-{Guid.NewGuid():N}", "operator-a"));
+        var ended = session.EndSession(new EndSessionCommand(started.SessionId!.Value, "operator-b", "Operator", "completed"));
+
+        Assert.True(realtime.TryPublish(ended.Notification));
+        Assert.IsType<SessionEndedNotification>(delivered);
+        Assert.Same(ended.Notification, delivered);
     }
 
     [Fact]
