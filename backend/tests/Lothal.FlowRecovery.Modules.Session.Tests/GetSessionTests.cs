@@ -100,4 +100,54 @@ public sealed class GetSessionTests
         Assert.Null(session);
     }
 
+    [Fact]
+    public void GetActiveSessionByFlowId_ShouldReturnActiveSessionSnapshot_WhenSessionExists()
+    {
+        var module = new SessionModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+
+        var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+        var session = module.GetActiveSessionByFlowId(flowId);
+
+        Assert.NotNull(session);
+        Assert.Equal(start.SessionId, session.SessionId);
+        Assert.Equal(flowId, session.FlowId);
+        Assert.Equal("Active", session.Status);
+        Assert.Single(session.Events);
+        Assert.IsType<SessionStartedEvent>(session.Events[0]);
+    }
+
+    [Fact]
+    public void GetActiveSessionByFlowId_ShouldReturnNull_WhenSessionEnded()
+    {
+        var module = new SessionModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+
+        var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+        var end = module.EndSession(new EndSessionCommand(start.SessionId!.Value, "system", "System", "done"));
+        var session = module.GetActiveSessionByFlowId(flowId);
+
+        Assert.True(end.Success);
+        Assert.Null(session);
+    }
+
+    [Fact]
+    public void GetActiveSessionByFlowId_ShouldTrimAndIgnoreCase_LikeStartSession()
+    {
+        var module = new SessionModule();
+        var requestedFlowId = $"  flow-{Guid.NewGuid():N}  ";
+        var normalizedFlowId = requestedFlowId.Trim();
+
+        var start = module.StartSession(new StartSessionCommand(requestedFlowId, "operator-a"));
+        var session = module.GetActiveSessionByFlowId($"  {normalizedFlowId.ToUpperInvariant()}  ");
+        var missing = module.GetActiveSessionByFlowId("   ");
+
+        Assert.True(start.Success);
+        Assert.Equal(normalizedFlowId, start.FlowId);
+        Assert.NotNull(session);
+        Assert.Equal(start.SessionId, session.SessionId);
+        Assert.Equal(normalizedFlowId, session.FlowId);
+        Assert.Null(missing);
+    }
+
 }

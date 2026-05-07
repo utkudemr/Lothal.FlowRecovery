@@ -6,6 +6,19 @@ internal sealed class InMemorySessionStore
     private readonly Dictionary<Guid, SessionRecord> _sessions = new();
     private readonly Dictionary<string, Guid> _activeSessionByFlowId = new(StringComparer.OrdinalIgnoreCase);
 
+    private static SessionSnapshot CreateSnapshot(SessionRecord session)
+    {
+        return new SessionSnapshot(
+            session.SessionId,
+            session.FlowId,
+            session.StartedBy,
+            session.Status,
+            session.CurrentStep,
+            session.StartedAtUtc,
+            session.EndedAtUtc,
+            session.Events.ToArray());
+    }
+
     public bool TrySaveIfNoActiveSession(
         Guid sessionId,
         string flowId,
@@ -47,15 +60,31 @@ internal sealed class InMemorySessionStore
                 return false;
             }
 
-            snapshot = new SessionSnapshot(
-                session.SessionId,
-                session.FlowId,
-                session.StartedBy,
-                session.Status,
-                session.CurrentStep,
-                session.StartedAtUtc,
-                session.EndedAtUtc,
-                session.Events.ToArray());
+            snapshot = CreateSnapshot(session);
+            return true;
+        }
+    }
+
+    public bool TryGetActiveSnapshotByFlowId(string flowId, out SessionSnapshot? snapshot)
+    {
+        lock (_sync)
+        {
+            if (string.IsNullOrWhiteSpace(flowId))
+            {
+                snapshot = null;
+                return false;
+            }
+
+            var normalizedFlowId = flowId.Trim();
+            if (!_activeSessionByFlowId.TryGetValue(normalizedFlowId, out var sessionId) ||
+                !_sessions.TryGetValue(sessionId, out var session) ||
+                session.Status != "Active")
+            {
+                snapshot = null;
+                return false;
+            }
+
+            snapshot = CreateSnapshot(session);
             return true;
         }
     }
@@ -67,15 +96,7 @@ internal sealed class InMemorySessionStore
             return _activeSessionByFlowId.Values
                 .Select(sessionId => _sessions[sessionId])
                 .Where(session => session.Status == "Active")
-                .Select(session => new SessionSnapshot(
-                    session.SessionId,
-                    session.FlowId,
-                    session.StartedBy,
-                    session.Status,
-                    session.CurrentStep,
-                    session.StartedAtUtc,
-                    session.EndedAtUtc,
-                    session.Events.ToArray()))
+                .Select(CreateSnapshot)
                 .ToArray();
         }
     }

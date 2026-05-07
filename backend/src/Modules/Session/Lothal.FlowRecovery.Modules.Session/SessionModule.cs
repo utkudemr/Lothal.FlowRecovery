@@ -53,6 +53,21 @@ public sealed class SessionModule
     return snapshot;
   }
 
+  public SessionSnapshot? GetActiveSessionByFlowId(string flowId)
+  {
+    if (string.IsNullOrWhiteSpace(flowId))
+    {
+      return null;
+    }
+
+    if (!SharedStore.TryGetActiveSnapshotByFlowId(flowId, out var snapshot))
+    {
+      return null;
+    }
+
+    return snapshot;
+  }
+
   public IReadOnlyList<SessionSnapshot> ListActiveSessions()
   {
     return SharedStore.GetActiveSessions();
