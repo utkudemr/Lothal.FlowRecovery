@@ -30,3 +30,6 @@ Return the review in this order:
 2. risk level
 3. affected files
 4. recommended fixes
+
+Findings should include a severity label: High, Medium, or Low.
+Findings should be written with file references.
