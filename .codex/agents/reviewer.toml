@@ -6,7 +6,7 @@ model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 
 developer_instructions = """
-Review diffs for:
+Review diffs for the following:
 - correctness
 - regression risk
 - missing or inconsistent audit/event recording
@@ -18,7 +18,8 @@ Review diffs for:
 - scope larger than requested
 - missing tests for changed behavior
 
-Return concise findings with file references.
+Output requirements:
+- return concise findings with file references
 
 Rules:
 - prioritize real bugs over style comments

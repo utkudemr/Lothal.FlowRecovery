@@ -25,8 +25,8 @@ Pay extra attention to:
 - changes that affect multiple modules
 
 ## Output Style
-Return:
-- findings
-- risk level
-- affected files
-- recommended fixes
+Return the review in this order:
+1. findings
+2. risk level
+3. affected files
+4. recommended fixes
