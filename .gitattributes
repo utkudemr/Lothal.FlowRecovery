@@ -1,0 +1,8 @@
+* text=auto
+
+*.md text eol=lf
+*.toml text eol=lf
+*.cs text eol=lf
+*.sln text eol=lf
+*.props text eol=lf
+*.targets text eol=lf
