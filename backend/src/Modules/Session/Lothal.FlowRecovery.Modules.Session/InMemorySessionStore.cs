@@ -6,23 +6,33 @@ internal sealed class InMemorySessionStore
     private readonly Dictionary<Guid, SessionRecord> _sessions = new();
     private readonly Dictionary<string, Guid> _activeSessionByFlowId = new(StringComparer.OrdinalIgnoreCase);
 
-    public bool TrySaveIfNoActiveSession(SessionRecord session, string duplicateRequestedBy)
+    public bool TrySaveIfNoActiveSession(
+        Guid sessionId,
+        string flowId,
+        string startedBy,
+        DateTime startedAtUtc,
+        string duplicateRequestedBy,
+        out SessionRecord? session,
+        out SessionRecord? activeSession,
+        out SessionStartedEvent? startedEvent)
     {
         lock (_sync)
         {
-            if (_activeSessionByFlowId.ContainsKey(session.FlowId))
-            {
-                if (_activeSessionByFlowId.TryGetValue(session.FlowId, out var activeSessionId) &&
-                    _sessions.TryGetValue(activeSessionId, out var activeSession))
-                {
-                    activeSession.RecordDuplicateStartAudit(duplicateRequestedBy, DateTime.UtcNow);
-                }
+            startedEvent = null;
 
+            if (_activeSessionByFlowId.TryGetValue(flowId, out var activeSessionId) &&
+                _sessions.TryGetValue(activeSessionId, out activeSession))
+            {
+                activeSession.RecordDuplicateStartAudit(duplicateRequestedBy, DateTime.UtcNow);
+                session = null;
                 return false;
             }
 
+            startedEvent = new SessionStartedEvent(sessionId, flowId, startedBy, startedAtUtc);
+            session = SessionRecord.Create(sessionId, flowId, startedBy, startedAtUtc, startedEvent);
             _sessions[session.SessionId] = session;
             _activeSessionByFlowId[session.FlowId] = session.SessionId;
+            activeSession = null;
             return true;
         }
     }

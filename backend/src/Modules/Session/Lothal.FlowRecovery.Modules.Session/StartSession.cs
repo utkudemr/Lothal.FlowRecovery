@@ -37,20 +37,25 @@ internal sealed class StartSessionHandler
 
         var startedAtUtc = DateTime.UtcNow;
         var sessionId = Guid.NewGuid();
-        var startedEvent = new SessionStartedEvent(sessionId, flowId, startedBy, startedAtUtc);
-        var session = SessionRecord.Create(sessionId, flowId, startedBy, startedAtUtc, startedEvent);
 
-        if (!_store.TrySaveIfNoActiveSession(session, startedBy))
+        if (!_store.TrySaveIfNoActiveSession(sessionId, flowId, startedBy, startedAtUtc, startedBy, out var session, out var activeSession, out var startedEvent))
         {
-            return new StartSessionResult(false, null, flowId, "Rejected", null, "Active session already exists.", null);
+            return new StartSessionResult(
+                false,
+                activeSession!.SessionId,
+                activeSession.FlowId,
+                activeSession.Status,
+                activeSession.StartedAtUtc,
+                "Active session already exists.",
+                null);
         }
 
-        var notification = SessionNotificationMapper.Map(startedEvent);
+        var notification = SessionNotificationMapper.Map(startedEvent!);
         if (notification is null)
         {
             throw new InvalidOperationException("Invariant violation: started outcome must produce a start-session notification.");
         }
 
-        return new StartSessionResult(true, session.SessionId, session.FlowId, session.Status, session.StartedAtUtc, null, notification);
+        return new StartSessionResult(true, session!.SessionId, session.FlowId, session.Status, session.StartedAtUtc, null, notification);
     }
 }

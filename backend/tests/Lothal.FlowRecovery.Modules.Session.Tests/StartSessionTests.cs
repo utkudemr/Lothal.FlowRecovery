@@ -43,6 +43,10 @@ public sealed class StartSessionTests
 
         Assert.True(first.Success);
         Assert.False(second.Success);
+        Assert.Equal(first.SessionId, second.SessionId);
+        Assert.Equal(first.FlowId, second.FlowId);
+        Assert.Equal(first.Status, second.Status);
+        Assert.Equal(first.StartedAtUtc, second.StartedAtUtc);
         Assert.Equal("Active session already exists.", second.Error);
         Assert.Null(second.Notification);
         Assert.NotNull(session);
