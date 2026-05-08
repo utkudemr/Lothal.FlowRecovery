@@ -121,6 +121,21 @@ public sealed class ValidateWorkflowCurrentStepTests
     }
 
     [Fact]
+    public void Validate_ShouldAllow_WhenTargetStepContainsWhitespace()
+    {
+        var provider = new TestWorkflowDefinitionProvider(CreateDefinition());
+        var definition = provider.Definition ?? throw new InvalidOperationException("Definition is required for this test.");
+
+        var result = ValidateWorkflowCurrentStep.Validate(provider, definition.FlowId, "Draft", " Review ");
+
+        Assert.True(result.Success);
+        Assert.Equal(ValidateWorkflowCurrentStepOutcome.Allowed, result.Outcome);
+        Assert.Null(result.Error);
+        Assert.Equal("Draft", result.CurrentStep);
+        Assert.Equal("Review", result.TargetStep);
+    }
+
+    [Fact]
     public void Validate_ShouldReturnNoOp_WhenCurrentAndTargetStepsMatch()
     {
         var provider = new TestWorkflowDefinitionProvider(CreateDefinition());

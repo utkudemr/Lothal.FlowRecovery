@@ -234,3 +234,24 @@ Unless explicitly stated otherwise:
 * avoid unnecessary abstractions
 * stay within the current module scope
 * prefer extending existing files and structures before creating new ones
+
+---
+
+## Progression Bias
+
+Do not repeatedly select only test-hardening tasks when meaningful feature progression is available.
+
+Prefer:
+- completing incomplete workflow capabilities
+- small functional improvements
+- operator-facing workflow behavior
+- missing domain behaviors
+- vertical slice progression
+
+Use test-only hardening when:
+- regression risk is high
+- behavior is unclear
+- validation coverage is genuinely missing
+- recent implementation lacks protection
+
+Avoid selecting multiple consecutive test-only tasks unless explicitly justified.

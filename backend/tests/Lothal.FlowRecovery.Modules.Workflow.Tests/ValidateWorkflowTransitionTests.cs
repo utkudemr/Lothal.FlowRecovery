@@ -137,6 +137,22 @@ public sealed class ValidateWorkflowTransitionTests
     }
 
     [Fact]
+    public void ValidateTransition_ShouldAllow_WhenInputsContainWhitespace()
+    {
+        var module = new WorkflowModule();
+        var definition = CreateDefinition(flowId: "flow-a");
+
+        var result = module.ValidateTransition(definition, " flow-a ", " Draft ", " Review ");
+
+        Assert.True(result.Success);
+        Assert.Equal(ValidateWorkflowTransitionOutcome.Allowed, result.Outcome);
+        Assert.Null(result.Error);
+        Assert.Equal("flow-a", result.FlowId);
+        Assert.Equal("Draft", result.CurrentStep);
+        Assert.Equal("Review", result.TargetStep);
+    }
+
+    [Fact]
     public void ValidateTransition_ShouldReject_WhenTransitionIsNotAllowed()
     {
         var module = new WorkflowModule();
