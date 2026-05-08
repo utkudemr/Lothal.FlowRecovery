@@ -2,6 +2,14 @@ namespace Lothal.FlowRecovery.Modules.Workflow;
 
 public sealed class WorkflowModule
 {
+    public ValidateWorkflowInitialStepResult ValidateInitialStep(
+        WorkflowDefinition definition,
+        string? flowId,
+        string? targetStep)
+    {
+        return ValidateWorkflowInitialStep.Validate(definition, flowId, targetStep);
+    }
+
     public ValidateWorkflowCurrentStepResult ValidateCurrentStep(
         IWorkflowDefinitionProvider workflowDefinitions,
         string? flowId,

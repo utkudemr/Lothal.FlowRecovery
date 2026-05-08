@@ -5,6 +5,19 @@ namespace Lothal.FlowRecovery.Modules.Workflow.Tests;
 public sealed class ValidateWorkflowTransitionTests
 {
     [Fact]
+    public void WorkflowModuleValidateInitialStep_ShouldAllow_WhenTargetIsWorkflowStartStep()
+    {
+        var module = new WorkflowModule();
+        var definition = CreateDefinition();
+
+        var result = module.ValidateInitialStep(definition, definition.FlowId, "Draft");
+
+        Assert.True(result.Success);
+        Assert.Equal(ValidateWorkflowInitialStepOutcome.Allowed, result.Outcome);
+        Assert.Null(result.Error);
+    }
+
+    [Fact]
     public void ValidateInitialStep_ShouldAllow_WhenTargetIsWorkflowStartStep()
     {
         var definition = CreateDefinition();
