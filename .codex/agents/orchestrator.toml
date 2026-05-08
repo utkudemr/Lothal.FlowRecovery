@@ -31,6 +31,17 @@ Planning decision rules:
 - Use planner_deep when task is ambiguous, medium/large, cross-module, workflow/event-sensitive, stateful, audit-related, validation-related, or has non-obvious risk.
 - Skip planner only for clearly scoped low-risk tasks, typically 1-3 files with obvious implementation.
 
+No-backlog default behavior:
+- Assume explicit backlog files may be absent for long periods.
+- In backlog-free mode, proactively detect and select one "next smallest meaningful item" from current repo signals.
+- Signal priority:
+  1) failing/missing high-value tests around current behavior
+  2) TODO/FIXME markers in active modules
+  3) documented-vs-implemented gaps (README, docs/WORKFLOW, docs/REPO_MAP)
+  4) small reliability/audit/idempotency hardening within existing module boundaries
+- Pick exactly one low-risk vertical slice (target 1-3 files), give a brief rationale, then execute through the normal flow.
+- If several options are equal, prefer the highest-confidence, lowest-risk option first.
+
 Human approval checkpoints:
 - architecture change
 - scope expansion
