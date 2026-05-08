@@ -26,6 +26,17 @@ public static class ValidateWorkflowCurrentStep
         ArgumentNullException.ThrowIfNull(workflowDefinitions);
 
         var normalizedFlowId = flowId?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedFlowId))
+        {
+            return new ValidateWorkflowCurrentStepResult(
+                false,
+                string.Empty,
+                currentStep?.Trim(),
+                targetStep?.Trim() ?? string.Empty,
+                ValidateWorkflowCurrentStepOutcome.Rejected,
+                "FlowId is required.");
+        }
+
         var workflowDefinition = workflowDefinitions.GetDefinition(normalizedFlowId);
         if (workflowDefinition is null)
         {

@@ -127,6 +127,36 @@ public sealed class ValidateWorkflowCurrentStepTests
     }
 
     [Fact]
+    public void Validate_ShouldReject_WhenFlowIdIsBlank()
+    {
+        var provider = new TestWorkflowDefinitionProvider(CreateDefinition());
+
+        var result = ValidateWorkflowCurrentStep.Validate(provider, "   ", "Draft", "Review");
+
+        Assert.False(result.Success);
+        Assert.Equal(ValidateWorkflowCurrentStepOutcome.Rejected, result.Outcome);
+        Assert.Equal("FlowId is required.", result.Error);
+        Assert.Equal(string.Empty, result.FlowId);
+        Assert.Equal("Draft", result.CurrentStep);
+        Assert.Equal("Review", result.TargetStep);
+    }
+
+    [Fact]
+    public void Validate_ShouldReject_WhenFlowIdIsNull()
+    {
+        var provider = new TestWorkflowDefinitionProvider(CreateDefinition());
+
+        var result = ValidateWorkflowCurrentStep.Validate(provider, null, "Draft", "Review");
+
+        Assert.False(result.Success);
+        Assert.Equal(ValidateWorkflowCurrentStepOutcome.Rejected, result.Outcome);
+        Assert.Equal("FlowId is required.", result.Error);
+        Assert.Equal(string.Empty, result.FlowId);
+        Assert.Equal("Draft", result.CurrentStep);
+        Assert.Equal("Review", result.TargetStep);
+    }
+
+    [Fact]
     public void Validate_ShouldRejectInitialStep_WhenTargetIsNotWorkflowStartStep()
     {
         var provider = new TestWorkflowDefinitionProvider(CreateDefinition());
