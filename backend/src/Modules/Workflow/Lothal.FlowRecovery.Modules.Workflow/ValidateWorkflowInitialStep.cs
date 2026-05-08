@@ -30,6 +30,16 @@ public static class ValidateWorkflowInitialStep
         var normalizedFlowId = flowId?.Trim() ?? string.Empty;
         var normalizedTargetStep = targetStep?.Trim() ?? string.Empty;
 
+        if (string.IsNullOrWhiteSpace(normalizedFlowId))
+        {
+            return new ValidateWorkflowInitialStepResult(false, string.Empty, normalizedTargetStep, ValidateWorkflowInitialStepOutcome.Rejected, "FlowId is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(normalizedTargetStep))
+        {
+            return new ValidateWorkflowInitialStepResult(false, normalizedFlowId, string.Empty, ValidateWorkflowInitialStepOutcome.Rejected, "TargetStep is required.");
+        }
+
         if (!string.Equals(definition.FlowId, normalizedFlowId, StringComparison.Ordinal))
         {
             return new ValidateWorkflowInitialStepResult(false, normalizedFlowId, normalizedTargetStep, ValidateWorkflowInitialStepOutcome.Rejected, "Workflow definition does not match FlowId.");

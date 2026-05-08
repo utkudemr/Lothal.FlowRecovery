@@ -41,6 +41,42 @@ public sealed class ValidateWorkflowTransitionTests
         Assert.Equal("TargetStep must be workflow start step.", result.Error);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void WorkflowModuleValidateInitialStep_ShouldReject_WhenFlowIdIsMissing(string? flowId)
+    {
+        var module = new WorkflowModule();
+        var definition = CreateDefinition();
+
+        var result = module.ValidateInitialStep(definition, flowId, "Draft");
+
+        Assert.False(result.Success);
+        Assert.Equal(ValidateWorkflowInitialStepOutcome.Rejected, result.Outcome);
+        Assert.Equal("FlowId is required.", result.Error);
+        Assert.Equal(string.Empty, result.FlowId);
+        Assert.Equal("Draft", result.TargetStep);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void WorkflowModuleValidateInitialStep_ShouldReject_WhenTargetStepIsMissing(string? targetStep)
+    {
+        var module = new WorkflowModule();
+        var definition = CreateDefinition();
+
+        var result = module.ValidateInitialStep(definition, definition.FlowId, targetStep);
+
+        Assert.False(result.Success);
+        Assert.Equal(ValidateWorkflowInitialStepOutcome.Rejected, result.Outcome);
+        Assert.Equal("TargetStep is required.", result.Error);
+        Assert.Equal(definition.FlowId, result.FlowId);
+        Assert.Equal(string.Empty, result.TargetStep);
+    }
+
     [Fact]
     public void ValidateInitialStep_ShouldReject_WhenFlowIdDoesNotMatchDefinition()
     {
