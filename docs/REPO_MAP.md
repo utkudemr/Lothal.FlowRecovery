@@ -26,3 +26,8 @@ backend/
 - Workflow currently covers `ValidateWorkflowInitialStep`, `ValidateWorkflowTransition`, and `ValidateWorkflowCurrentStep`
 - Session uses an in-memory shared store
 - Session exposes `StartSession`, `SetCurrentStep`, `EndSession`, `GetSession`, `GetActiveSessionByFlowId`, and `ListActiveSessions`
+
+## Current Test Projects
+- `backend/tests/Lothal.FlowRecovery.Modules.Session.Tests/Lothal.FlowRecovery.Modules.Session.Tests.csproj`
+- `backend/tests/Lothal.FlowRecovery.Modules.Workflow.Tests/Lothal.FlowRecovery.Modules.Workflow.Tests.csproj`
+- `backend/tests/Lothal.FlowRecovery.Modules.Realtime.Tests/Lothal.FlowRecovery.Modules.Realtime.Tests.csproj`
