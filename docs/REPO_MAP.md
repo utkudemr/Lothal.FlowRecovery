@@ -22,7 +22,7 @@ backend/
 ```
 
 ## Current Backend State
-- Session and Workflow modules exist in the current backend
-- Workflow is currently limited to `ValidateWorkflowTransition`
+- Session, Workflow, and Realtime modules exist in the current backend
+- Workflow currently covers `ValidateWorkflowInitialStep`, `ValidateWorkflowTransition`, and `ValidateWorkflowCurrentStep`
 - Session uses an in-memory shared store
-- Session exposes `StartSession`, `SetCurrentStep`, `EndSession`, and `GetSession`
+- Session exposes `StartSession`, `SetCurrentStep`, `EndSession`, `GetSession`, `GetActiveSessionByFlowId`, and `ListActiveSessions`
