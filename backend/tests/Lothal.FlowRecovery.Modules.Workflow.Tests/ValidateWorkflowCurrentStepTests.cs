@@ -38,13 +38,15 @@ public sealed class ValidateWorkflowCurrentStepTests
         Assert.Equal("Closed", result.TargetStep);
     }
 
-    [Fact]
-    public void Validate_ShouldAllow_WhenWorkflowHasNoCurrentStepAndTargetIsStartStep()
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Validate_ShouldAllow_WhenWorkflowHasNoCurrentStepAndTargetIsStartStep(string? currentStep)
     {
         var provider = new TestWorkflowDefinitionProvider(CreateDefinition());
         var definition = provider.Definition ?? throw new InvalidOperationException("Definition is required for this test.");
 
-        var result = ValidateWorkflowCurrentStep.Validate(provider, definition.FlowId, null, "Draft");
+        var result = ValidateWorkflowCurrentStep.Validate(provider, definition.FlowId, currentStep, "Draft");
 
         Assert.True(result.Success);
         Assert.Equal(ValidateWorkflowCurrentStepOutcome.Allowed, result.Outcome);
