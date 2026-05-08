@@ -179,6 +179,25 @@ public sealed class ValidateWorkflowTransitionTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
+    public void ValidateTransition_ShouldReject_WhenCurrentStepIsMissing(string? currentStep)
+    {
+        var module = new WorkflowModule();
+        var definition = CreateDefinition();
+
+        var result = module.ValidateTransition(definition, definition.FlowId, currentStep, "Review");
+
+        Assert.False(result.Success);
+        Assert.Equal(ValidateWorkflowTransitionOutcome.Rejected, result.Outcome);
+        Assert.Equal("CurrentStep is required.", result.Error);
+        Assert.Equal(definition.FlowId, result.FlowId);
+        Assert.Equal(string.Empty, result.CurrentStep);
+        Assert.Equal(string.Empty, result.TargetStep);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
     public void ValidateTransition_ShouldReject_WhenFlowIdIsMissing(string? flowId)
     {
         var module = new WorkflowModule();
