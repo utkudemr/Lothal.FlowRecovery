@@ -100,6 +100,24 @@ public sealed class ValidateWorkflowCurrentStepTests
         Assert.Equal("Review", result.TargetStep);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("Draft")]
+    public void Validate_ShouldReject_WhenTargetStepIsMissing(string? currentStep)
+    {
+        var provider = new TestWorkflowDefinitionProvider(CreateDefinition());
+        var definition = provider.Definition ?? throw new InvalidOperationException("Definition is required for this test.");
+
+        var result = ValidateWorkflowCurrentStep.Validate(provider, definition.FlowId, currentStep, "   ");
+
+        Assert.False(result.Success);
+        Assert.Equal(ValidateWorkflowCurrentStepOutcome.Rejected, result.Outcome);
+        Assert.Equal("TargetStep is required.", result.Error);
+        Assert.Equal(definition.FlowId, result.FlowId);
+        Assert.Equal(currentStep?.Trim(), result.CurrentStep);
+        Assert.Equal(string.Empty, result.TargetStep);
+    }
+
     [Fact]
     public void Validate_ShouldReturnNoOp_WhenCurrentAndTargetStepsMatch()
     {
