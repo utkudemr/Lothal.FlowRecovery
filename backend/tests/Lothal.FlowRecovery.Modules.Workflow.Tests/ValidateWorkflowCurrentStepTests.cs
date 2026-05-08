@@ -5,6 +5,40 @@ namespace Lothal.FlowRecovery.Modules.Workflow.Tests;
 public sealed class ValidateWorkflowCurrentStepTests
 {
     [Fact]
+    public void WorkflowModuleValidateCurrentStep_ShouldAllowInitialStep()
+    {
+        var module = new WorkflowModule();
+        var provider = new TestWorkflowDefinitionProvider(CreateDefinition());
+        var definition = provider.Definition ?? throw new InvalidOperationException("Definition is required for this test.");
+
+        var result = module.ValidateCurrentStep(provider, definition.FlowId, null, "Draft");
+
+        Assert.True(result.Success);
+        Assert.Equal(ValidateWorkflowCurrentStepOutcome.Allowed, result.Outcome);
+        Assert.Null(result.Error);
+        Assert.Equal(definition.FlowId, result.FlowId);
+        Assert.Null(result.CurrentStep);
+        Assert.Equal("Draft", result.TargetStep);
+    }
+
+    [Fact]
+    public void WorkflowModuleValidateCurrentStep_ShouldRejectInvalidTransition()
+    {
+        var module = new WorkflowModule();
+        var provider = new TestWorkflowDefinitionProvider(CreateDefinition());
+        var definition = provider.Definition ?? throw new InvalidOperationException("Definition is required for this test.");
+
+        var result = module.ValidateCurrentStep(provider, definition.FlowId, "Draft", "Closed");
+
+        Assert.False(result.Success);
+        Assert.Equal(ValidateWorkflowCurrentStepOutcome.Rejected, result.Outcome);
+        Assert.Equal("Transition is not allowed.", result.Error);
+        Assert.Equal(definition.FlowId, result.FlowId);
+        Assert.Equal("Draft", result.CurrentStep);
+        Assert.Equal("Closed", result.TargetStep);
+    }
+
+    [Fact]
     public void Validate_ShouldAllow_WhenWorkflowHasNoCurrentStepAndTargetIsStartStep()
     {
         var provider = new TestWorkflowDefinitionProvider(CreateDefinition());

@@ -1,9 +1,10 @@
 # Workflow Module
 
-This module currently contains only `ValidateWorkflowTransition`.
+This module currently contains workflow validation for transition and current-step requests.
 
 Scope:
 - validates workflow transition rules
+- validates current-step requests, including first step assignment through the workflow start step
 
 What it does not do:
 - does not change session state
