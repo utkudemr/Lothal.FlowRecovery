@@ -71,6 +71,7 @@ Data strategy:
 * checks correctness and risks
 * ensures audit/event consistency
 * prevents scope creep
+* identifies durable lessons and memory-worthy findings
 
 ### Explorer
 
@@ -119,6 +120,7 @@ Use the correct agent based on task complexity:
 * Prefer summaries over repeating context
 * Prefer diff-based review over full-file review
 * Keep tasks narrow and well-defined
+* Consult project memory docs before planning or coding
 
 ---
 
@@ -200,6 +202,10 @@ follow this process:
    * changed files
    * next smallest step
 
+9. If reviewer identifies a durable lesson or decision:
+
+   * suggest a minimal memory update
+
 ---
 
 ## Reviewer Findings Policy
@@ -209,6 +215,7 @@ follow this process:
 * Do not automatically restart planner/coder loops after reviewer findings.
 * Follow-up fixes should be handled as a new small scoped task.
 * Avoid infinite reviewer/coder retry cycles.
+* Reviewer may suggest memory updates when durable findings are discovered.
 
 The user decides whether to:
 
@@ -242,16 +249,62 @@ Unless explicitly stated otherwise:
 Do not repeatedly select only test-hardening tasks when meaningful feature progression is available.
 
 Prefer:
-- completing incomplete workflow capabilities
-- small functional improvements
-- operator-facing workflow behavior
-- missing domain behaviors
-- vertical slice progression
+
+* completing incomplete workflow capabilities
+* small functional improvements
+* operator-facing workflow behavior
+* missing domain behaviors
+* vertical slice progression
 
 Use test-only hardening when:
-- regression risk is high
-- behavior is unclear
-- validation coverage is genuinely missing
-- recent implementation lacks protection
+
+* regression risk is high
+* behavior is unclear
+* validation coverage is genuinely missing
+* recent implementation lacks protection
 
 Avoid selecting multiple consecutive test-only tasks unless explicitly justified.
+
+---
+
+## Project Memory
+
+Before planning or coding, agents should read:
+
+* `docs/DECISIONS.md`
+* `docs/LESSONS_LEARNED.md`
+* `docs/AGENT_MEMORY.md`
+
+Use these files as durable project memory.
+
+Update them only when:
+
+* a durable architecture/product decision is made
+* a repeated mistake is identified
+* a workflow rule changes
+* a rejected approach needs to be remembered
+
+Do not write:
+
+* temporary thoughts
+* private reasoning
+* speculative future ideas
+* implementation noise
+
+---
+
+## Memory Quality Rules
+
+Memory files should remain:
+
+* concise
+* durable
+* high-signal
+
+Avoid:
+
+* temporary implementation notes
+* noisy debugging history
+* trivial fixes
+* speculative future ideas
+* duplicate information already present elsewhere
