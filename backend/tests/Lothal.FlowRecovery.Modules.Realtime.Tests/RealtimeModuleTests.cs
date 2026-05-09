@@ -1,5 +1,6 @@
 using Lothal.FlowRecovery.Modules.Realtime;
 using Lothal.FlowRecovery.Modules.Session;
+using Lothal.FlowRecovery.Modules.Workflow;
 using System.Collections.Concurrent;
 
 namespace Lothal.FlowRecovery.Modules.Realtime.Tests;
@@ -92,6 +93,207 @@ public sealed class RealtimeModuleTests
         module.Publish(notification);
 
         Assert.Same(notification, delivered);
+    }
+
+    [Fact]
+    public void SubscribeToFlow_ShouldDeliverMatchingNotification()
+    {
+        var module = new RealtimeModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var subscriptionFlowId = $"  {flowId.ToUpperInvariant()}  ";
+        var deliveredNotifications = new List<SessionNotification>();
+
+        module.SubscribeToFlow(subscriptionFlowId, notification => deliveredNotifications.Add(notification));
+
+        var started = new SessionStartedNotification(Guid.NewGuid(), flowId, "operator-a", new DateTime(2026, 5, 2, 18, 45, 0, DateTimeKind.Utc));
+        var changed = new StepChangedNotification(Guid.NewGuid(), flowId, "step-2", "step-1", "operator-a", "Operator", null, new DateTime(2026, 5, 2, 18, 46, 0, DateTimeKind.Utc));
+        var ended = new SessionEndedNotification(Guid.NewGuid(), flowId, "operator-a", "Operator", null, "Active", "Ended", new DateTime(2026, 5, 2, 18, 47, 0, DateTimeKind.Utc));
+
+        module.Publish(started);
+        module.Publish(changed);
+        module.Publish(ended);
+
+        Assert.Equal(3, deliveredNotifications.Count);
+        Assert.Same(started, deliveredNotifications[0]);
+        Assert.Same(changed, deliveredNotifications[1]);
+        Assert.Same(ended, deliveredNotifications[2]);
+    }
+
+    [Fact]
+    public void SubscribeToFlow_ShouldSuppressNonMatchingNotification()
+    {
+        var module = new RealtimeModule();
+        var subscribedFlowId = $"flow-{Guid.NewGuid():N}";
+        var otherFlowId = $"flow-{Guid.NewGuid():N}";
+        var deliveredCount = 0;
+
+        module.SubscribeToFlow(subscribedFlowId, _ => deliveredCount++);
+
+        module.Publish(CreateNotification(Guid.NewGuid(), otherFlowId));
+        module.Publish(CreateStepChangedNotification(Guid.NewGuid(), otherFlowId));
+        module.Publish(CreateEndedNotification(Guid.NewGuid(), otherFlowId));
+
+        Assert.Equal(0, deliveredCount);
+    }
+
+    [Fact]
+    public void SubscribeToSession_ShouldDeliverSubscribedSessionLifecycleNotifications_AndIgnoreOtherSession()
+    {
+        var subscribedFlowId = $"flow-{Guid.NewGuid():N}";
+        var otherFlowId = $"flow-{Guid.NewGuid():N}";
+        var realtime = new RealtimeModule();
+        var session = new SessionModule(new TestWorkflowDefinitionProvider(
+            new WorkflowDefinition(subscribedFlowId, new[] { "cart", "payment", "review", "confirm" }, new Dictionary<string, IReadOnlyCollection<string>>(StringComparer.Ordinal)
+            {
+                ["cart"] = new[] { "payment" },
+                ["payment"] = new[] { "review" },
+                ["review"] = new[] { "confirm" },
+                ["confirm"] = Array.Empty<string>(),
+            }),
+            new WorkflowDefinition(otherFlowId, new[] { "cart", "payment", "review", "confirm" }, new Dictionary<string, IReadOnlyCollection<string>>(StringComparer.Ordinal)
+            {
+                ["cart"] = new[] { "payment" },
+                ["payment"] = new[] { "review" },
+                ["review"] = new[] { "confirm" },
+                ["confirm"] = Array.Empty<string>(),
+            })));
+        var deliveredNotifications = new List<SessionNotification>();
+
+        var subscribedStart = session.StartSession(new StartSessionCommand(subscribedFlowId, "operator-a"));
+        var otherStart = session.StartSession(new StartSessionCommand(otherFlowId, "operator-b"));
+        var subscribedStep = session.SetCurrentStep(new SetCurrentStepCommand(subscribedStart.SessionId!.Value, "cart", "operator-c", "System", null));
+        var otherStep = session.SetCurrentStep(new SetCurrentStepCommand(otherStart.SessionId!.Value, "cart", "operator-d", "System", null));
+        var subscribedEnd = session.EndSession(new EndSessionCommand(subscribedStart.SessionId.Value, "operator-e", "Operator", "done"));
+        var otherEnd = session.EndSession(new EndSessionCommand(otherStart.SessionId.Value, "operator-f", "Operator", "done"));
+
+        Assert.True(subscribedStart.Success);
+        Assert.True(otherStart.Success);
+        Assert.True(subscribedStep.Success);
+        Assert.True(otherStep.Success);
+        Assert.True(subscribedEnd.Success);
+        Assert.True(otherEnd.Success);
+
+        realtime.SubscribeToSession(subscribedStart.SessionId!.Value, notification => deliveredNotifications.Add(notification));
+
+        Assert.True(realtime.TryPublish(otherStart.Notification));
+        Assert.True(realtime.TryPublish(subscribedStart.Notification));
+        Assert.True(realtime.TryPublish(otherStep.Notification));
+        Assert.True(realtime.TryPublish(subscribedStep.Notification));
+        Assert.True(realtime.TryPublish(otherEnd.Notification));
+        Assert.True(realtime.TryPublish(subscribedEnd.Notification));
+
+        Assert.Collection(deliveredNotifications,
+            notification =>
+            {
+                var started = Assert.IsType<SessionStartedNotification>(notification);
+                Assert.Equal(subscribedStart.SessionId.Value, started.SessionId);
+                Assert.Equal(subscribedFlowId, started.FlowId);
+                Assert.Equal("operator-a", started.StartedBy);
+            },
+            notification =>
+            {
+                var stepChanged = Assert.IsType<StepChangedNotification>(notification);
+                Assert.Equal(subscribedStart.SessionId.Value, stepChanged.SessionId);
+                Assert.Equal(subscribedFlowId, stepChanged.FlowId);
+                Assert.Equal("cart", stepChanged.CurrentStep);
+            },
+            notification =>
+            {
+                var ended = Assert.IsType<SessionEndedNotification>(notification);
+                Assert.Equal(subscribedStart.SessionId.Value, ended.SessionId);
+                Assert.Equal(subscribedFlowId, ended.FlowId);
+                Assert.Equal("Ended", ended.NewStatus);
+            });
+
+        Assert.DoesNotContain(deliveredNotifications, notification =>
+            notification is SessionStartedNotification started && started.SessionId == otherStart.SessionId
+            || notification is StepChangedNotification stepChanged && stepChanged.SessionId == otherStart.SessionId
+            || notification is SessionEndedNotification ended && ended.SessionId == otherStart.SessionId);
+    }
+
+    [Fact]
+    public void SubscribeToFlow_ShouldDeliverSubscribedSessionLifecycleNotifications_AndIgnoreOtherFlow()
+    {
+        var subscribedFlowId = $"flow-{Guid.NewGuid():N}";
+        var otherFlowId = $"flow-{Guid.NewGuid():N}";
+        var realtime = new RealtimeModule();
+        var session = new SessionModule(new TestWorkflowDefinitionProvider(
+            new WorkflowDefinition(subscribedFlowId, new[] { "cart", "payment", "review", "confirm" }, new Dictionary<string, IReadOnlyCollection<string>>(StringComparer.Ordinal)
+            {
+                ["cart"] = new[] { "payment" },
+                ["payment"] = new[] { "review" },
+                ["review"] = new[] { "confirm" },
+                ["confirm"] = Array.Empty<string>(),
+            }),
+            new WorkflowDefinition(otherFlowId, new[] { "cart", "payment", "review", "confirm" }, new Dictionary<string, IReadOnlyCollection<string>>(StringComparer.Ordinal)
+            {
+                ["cart"] = new[] { "payment" },
+                ["payment"] = new[] { "review" },
+                ["review"] = new[] { "confirm" },
+                ["confirm"] = Array.Empty<string>(),
+            })));
+        var deliveredNotifications = new List<SessionNotification>();
+
+        realtime.SubscribeToFlow(subscribedFlowId, notification => deliveredNotifications.Add(notification));
+
+        var otherStart = session.StartSession(new StartSessionCommand(otherFlowId, "operator-b"));
+        var subscribedStart = session.StartSession(new StartSessionCommand(subscribedFlowId, "operator-a"));
+        var otherStep = session.SetCurrentStep(new SetCurrentStepCommand(otherStart.SessionId!.Value, "cart", "operator-c", "System", null));
+        var otherEnd = session.EndSession(new EndSessionCommand(otherStart.SessionId.Value, "operator-d", "System", null));
+        var subscribedStep = session.SetCurrentStep(new SetCurrentStepCommand(subscribedStart.SessionId!.Value, "cart", "operator-c", "System", null));
+        var subscribedEnd = session.EndSession(new EndSessionCommand(subscribedStart.SessionId.Value, "operator-d", "System", null));
+
+        Assert.True(otherStart.Success);
+        Assert.True(subscribedStart.Success);
+        Assert.True(otherStep.Success);
+        Assert.True(otherEnd.Success);
+        Assert.True(subscribedStep.Success);
+        Assert.True(subscribedEnd.Success);
+        Assert.True(realtime.TryPublish(otherStart.Notification));
+        Assert.True(realtime.TryPublish(subscribedStart.Notification));
+        Assert.True(realtime.TryPublish(otherStep.Notification));
+        Assert.True(realtime.TryPublish(otherEnd.Notification));
+        Assert.True(realtime.TryPublish(subscribedStep.Notification));
+        Assert.True(realtime.TryPublish(subscribedEnd.Notification));
+
+        Assert.Collection(deliveredNotifications,
+            notification =>
+            {
+                var started = Assert.IsType<SessionStartedNotification>(notification);
+                Assert.Equal(subscribedFlowId, started.FlowId);
+                Assert.Equal("operator-a", started.StartedBy);
+            },
+            notification =>
+            {
+                var stepChanged = Assert.IsType<StepChangedNotification>(notification);
+                Assert.Equal(subscribedFlowId, stepChanged.FlowId);
+                Assert.Equal("cart", stepChanged.CurrentStep);
+            },
+            notification =>
+            {
+                var ended = Assert.IsType<SessionEndedNotification>(notification);
+                Assert.Equal(subscribedFlowId, ended.FlowId);
+                Assert.Equal("Ended", ended.NewStatus);
+            });
+
+        Assert.DoesNotContain(deliveredNotifications, notification =>
+            notification is SessionStartedNotification started && started.FlowId == otherFlowId
+            || notification is StepChangedNotification stepChanged && stepChanged.FlowId == otherFlowId
+            || notification is SessionEndedNotification ended && ended.FlowId == otherFlowId);
+    }
+
+    [Fact]
+    public void SubscribeToFlow_ShouldStopDelivery_AfterDisposal()
+    {
+        var module = new RealtimeModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var deliveredCount = 0;
+        var subscription = module.SubscribeToFlow(flowId, _ => deliveredCount++);
+
+        subscription.Dispose();
+        module.Publish(CreateNotification(Guid.NewGuid(), flowId));
+
+        Assert.Equal(0, deliveredCount);
     }
 
     [Fact]
@@ -343,11 +545,31 @@ public sealed class RealtimeModuleTests
     }
 
     [Fact]
+    public void SubscribeToFlow_ShouldThrowArgumentException_ForBlankFlowId()
+    {
+        var module = new RealtimeModule();
+
+        var exception = Assert.Throws<ArgumentException>(() => module.SubscribeToFlow("   ", _ => { }));
+
+        Assert.Equal("flowId", exception.ParamName);
+    }
+
+    [Fact]
     public void SubscribeToSession_ShouldThrowArgumentNullException_ForNullHandler()
     {
         var module = new RealtimeModule();
 
         var exception = Assert.Throws<ArgumentNullException>(() => module.SubscribeToSession(Guid.NewGuid(), null!));
+
+        Assert.Equal("handler", exception.ParamName);
+    }
+
+    [Fact]
+    public void SubscribeToFlow_ShouldThrowArgumentNullException_ForNullHandler()
+    {
+        var module = new RealtimeModule();
+
+        var exception = Assert.Throws<ArgumentNullException>(() => module.SubscribeToFlow($"flow-{Guid.NewGuid():N}", null!));
 
         Assert.Equal("handler", exception.ParamName);
     }
@@ -366,16 +588,22 @@ public sealed class RealtimeModuleTests
         CreateNotification(Guid.NewGuid());
 
     private static SessionNotification CreateNotification(Guid sessionId) =>
+        CreateNotification(sessionId, "flow-1");
+
+    private static SessionNotification CreateNotification(Guid sessionId, string flowId) =>
         new SessionStartedNotification(
             sessionId,
-            "flow-1",
+            flowId,
             "operator-a",
             new DateTime(2026, 5, 2, 18, 45, 0, DateTimeKind.Utc));
 
     private static SessionNotification CreateStepChangedNotification(Guid sessionId) =>
+        CreateStepChangedNotification(sessionId, "flow-1");
+
+    private static SessionNotification CreateStepChangedNotification(Guid sessionId, string flowId) =>
         new StepChangedNotification(
             sessionId,
-            "flow-1",
+            flowId,
             "step-2",
             "step-1",
             "operator-a",
@@ -384,13 +612,33 @@ public sealed class RealtimeModuleTests
             new DateTime(2026, 5, 2, 18, 46, 0, DateTimeKind.Utc));
 
     private static SessionNotification CreateEndedNotification(Guid sessionId) =>
+        CreateEndedNotification(sessionId, "flow-1");
+
+    private static SessionNotification CreateEndedNotification(Guid sessionId, string flowId) =>
         new SessionEndedNotification(
             sessionId,
-            "flow-1",
+            flowId,
             "operator-a",
             "Operator",
             null,
             "Active",
             "Ended",
             new DateTime(2026, 5, 2, 18, 47, 0, DateTimeKind.Utc));
+
+    private sealed class TestWorkflowDefinitionProvider : IWorkflowDefinitionProvider
+    {
+        private readonly Dictionary<string, WorkflowDefinition> _definitions;
+
+        public TestWorkflowDefinitionProvider(params WorkflowDefinition[] definitions)
+        {
+            _definitions = definitions.ToDictionary(definition => definition.FlowId, StringComparer.Ordinal);
+        }
+
+        public WorkflowDefinition? GetDefinition(string flowId)
+        {
+            return _definitions.TryGetValue(flowId, out var definition)
+                ? definition
+                : null;
+        }
+    }
 }

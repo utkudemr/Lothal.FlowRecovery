@@ -7,6 +7,36 @@ public sealed class RealtimeModule
     private readonly object _gate = new();
     private readonly List<Subscription> _subscriptions = new();
 
+    public IDisposable SubscribeToFlow(string flowId, Action<SessionNotification> handler)
+    {
+        var normalizedFlowId = flowId?.Trim();
+        if (string.IsNullOrWhiteSpace(normalizedFlowId))
+        {
+            throw new ArgumentException("FlowId is required.", nameof(flowId));
+        }
+
+        ArgumentNullException.ThrowIfNull(handler);
+
+        return Subscribe(notification =>
+        {
+            if (notification is SessionStartedNotification startedNotification &&
+                string.Equals(startedNotification.FlowId, normalizedFlowId, StringComparison.OrdinalIgnoreCase))
+            {
+                handler(notification);
+            }
+            else if (notification is StepChangedNotification stepChangedNotification &&
+                     string.Equals(stepChangedNotification.FlowId, normalizedFlowId, StringComparison.OrdinalIgnoreCase))
+            {
+                handler(notification);
+            }
+            else if (notification is SessionEndedNotification endedNotification &&
+                     string.Equals(endedNotification.FlowId, normalizedFlowId, StringComparison.OrdinalIgnoreCase))
+            {
+                handler(notification);
+            }
+        });
+    }
+
     public IDisposable SubscribeToSession(Guid sessionId, Action<SessionNotification> handler)
     {
         if (sessionId == Guid.Empty)

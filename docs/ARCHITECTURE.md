@@ -3,14 +3,14 @@
 ## Style
 The system is implemented as a modular monolith with microservice-friendly boundaries.
 Current implementation runs in-memory in a single process.
-Session and Workflow are the implemented modules today; Workflow is currently limited to `ValidateWorkflowTransition`.
+Session, Workflow, and Realtime are implemented today; Workflow currently exposes `ValidateWorkflowInitialStep`, `ValidateWorkflowTransition`, and `ValidateWorkflowCurrentStep`.
 
 ## Core Modules
 - Session: manages user sessions and current flow state
 - Basket: planned module for basket data
-- Workflow: currently only validates workflow transitions
+- Workflow: validates workflow steps via `ValidateWorkflowInitialStep`, `ValidateWorkflowTransition`, and `ValidateWorkflowCurrentStep`
 - Operations: planned module for operator interventions
-- Realtime: planned module for client updates
+- Realtime: in-memory publish/subscribe for session notifications; supports session-scoped and flow-scoped subscriptions
 
 ## Session Model
 - commands: `StartSession`, `GetSession`, `EndSession`, `SetCurrentStep`
