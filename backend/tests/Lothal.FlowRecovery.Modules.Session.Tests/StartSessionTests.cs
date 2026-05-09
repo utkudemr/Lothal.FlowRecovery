@@ -14,6 +14,7 @@ public sealed class StartSessionTests
         Assert.False(result.Success);
         Assert.Equal("FlowId is required.", result.Error);
         Assert.Null(result.SessionId);
+        Assert.Null(result.Outcome);
         Assert.Null(result.Notification);
     }
 
@@ -28,6 +29,7 @@ public sealed class StartSessionTests
         Assert.False(result.Success);
         Assert.Equal("StartedBy is required.", result.Error);
         Assert.Equal(flowId, result.FlowId);
+        Assert.Null(result.Outcome);
         Assert.Null(result.Notification);
     }
 
@@ -48,6 +50,7 @@ public sealed class StartSessionTests
         Assert.Equal(first.Status, second.Status);
         Assert.Equal(first.StartedAtUtc, second.StartedAtUtc);
         Assert.Equal("Active session already exists.", second.Error);
+        Assert.Equal(StartSessionOutcome.DuplicateActiveSession, second.Outcome);
         Assert.Null(second.Notification);
         Assert.NotNull(session);
         Assert.Equal("Active", session.Status);
@@ -77,6 +80,7 @@ public sealed class StartSessionTests
         Assert.Equal("Active", result.Status);
         Assert.NotNull(result.StartedAtUtc);
         Assert.Null(result.Error);
+        Assert.Equal(StartSessionOutcome.Started, result.Outcome);
         var notification = Assert.IsType<SessionStartedNotification>(result.Notification);
         Assert.Equal(result.SessionId, notification.SessionId);
         Assert.Equal(flowId, notification.FlowId);

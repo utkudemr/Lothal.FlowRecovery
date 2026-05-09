@@ -9,7 +9,14 @@ public sealed record StartSessionResult(
     string Status,
     DateTime? StartedAtUtc,
     string? Error,
+    StartSessionOutcome? Outcome,
     SessionNotification? Notification);
+
+public enum StartSessionOutcome
+{
+    Started,
+    DuplicateActiveSession
+}
 
 internal sealed class StartSessionHandler
 {
@@ -27,12 +34,12 @@ internal sealed class StartSessionHandler
 
         if (string.IsNullOrWhiteSpace(flowId))
         {
-            return new StartSessionResult(false, null, string.Empty, "Rejected", null, "FlowId is required.", null);
+            return new StartSessionResult(false, null, string.Empty, "Rejected", null, "FlowId is required.", null, null);
         }
 
         if (string.IsNullOrWhiteSpace(startedBy))
         {
-            return new StartSessionResult(false, null, flowId, "Rejected", null, "StartedBy is required.", null);
+            return new StartSessionResult(false, null, flowId, "Rejected", null, "StartedBy is required.", null, null);
         }
 
         var startedAtUtc = DateTime.UtcNow;
@@ -47,6 +54,7 @@ internal sealed class StartSessionHandler
                 activeSession.Status,
                 activeSession.StartedAtUtc,
                 "Active session already exists.",
+                StartSessionOutcome.DuplicateActiveSession,
                 null);
         }
 
@@ -56,6 +64,6 @@ internal sealed class StartSessionHandler
             throw new InvalidOperationException("Invariant violation: started outcome must produce a start-session notification.");
         }
 
-        return new StartSessionResult(true, session!.SessionId, session.FlowId, session.Status, session.StartedAtUtc, null, notification);
+        return new StartSessionResult(true, session!.SessionId, session.FlowId, session.Status, session.StartedAtUtc, null, StartSessionOutcome.Started, notification);
     }
 }
