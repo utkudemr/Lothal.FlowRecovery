@@ -5,6 +5,47 @@ namespace Lothal.FlowRecovery.Modules.Session.Tests;
 public sealed class ListActiveSessionsTests
 {
     [Fact]
+    public void GetActiveSessionByFlowId_ShouldReturnActiveSession_WhenFlowIdHasWhitespaceAndDifferentCase()
+    {
+        var module = new SessionModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+
+        var snapshot = module.GetActiveSessionByFlowId($"  {flowId.ToUpperInvariant()}  ");
+
+        Assert.NotNull(snapshot);
+        Assert.Equal(start.SessionId, snapshot.SessionId);
+        Assert.Equal(flowId, snapshot.FlowId);
+        Assert.Equal("Active", snapshot.Status);
+    }
+
+    [Fact]
+    public void GetActiveSessionByFlowId_ShouldReturnNull_WhenSessionIsEnded()
+    {
+        var module = new SessionModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+        var end = module.EndSession(new EndSessionCommand(start.SessionId!.Value, "operator-a", "Operator", "done"));
+
+        var snapshot = module.GetActiveSessionByFlowId(flowId);
+
+        Assert.True(end.Success);
+        Assert.Null(snapshot);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void GetActiveSessionByFlowId_ShouldReturnNull_WhenFlowIdIsBlank(string flowId)
+    {
+        var module = new SessionModule();
+
+        var snapshot = module.GetActiveSessionByFlowId(flowId);
+
+        Assert.Null(snapshot);
+    }
+
+    [Fact]
     public void ListActiveSessions_ShouldReturnOnlyActiveSessionSnapshots()
     {
         var module = new SessionModule();
