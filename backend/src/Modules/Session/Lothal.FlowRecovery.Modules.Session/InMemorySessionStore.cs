@@ -96,6 +96,8 @@ internal sealed class InMemorySessionStore
             return _activeSessionByFlowId.Values
                 .Select(sessionId => _sessions[sessionId])
                 .Where(session => session.Status == "Active")
+                .OrderBy(session => session.StartedAtUtc)
+                .ThenBy(session => session.SessionId)
                 .Select(CreateSnapshot)
                 .ToArray();
         }

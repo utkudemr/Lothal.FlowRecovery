@@ -63,6 +63,33 @@ public sealed class ListActiveSessionsTests
     }
 
     [Fact]
+    public async Task ListActiveSessions_ShouldReturnSessionsOrderedByStartedAtUtc()
+    {
+        var module = new SessionModule();
+        var firstFlowId = $"flow-{Guid.NewGuid():N}";
+        var secondFlowId = $"flow-{Guid.NewGuid():N}";
+
+        var firstStart = module.StartSession(new StartSessionCommand(firstFlowId, "operator-a"));
+        await Task.Delay(5);
+        var secondStart = module.StartSession(new StartSessionCommand(secondFlowId, "operator-b"));
+
+        var sessions = module.ListActiveSessions();
+        var firstIndex = sessions
+            .Select((session, index) => new { session, index })
+            .Single(item => item.session.SessionId == firstStart.SessionId!.Value)
+            .index;
+        var secondIndex = sessions
+            .Select((session, index) => new { session, index })
+            .Single(item => item.session.SessionId == secondStart.SessionId!.Value)
+            .index;
+
+        Assert.True(firstIndex < secondIndex);
+        Assert.True(
+            sessions[firstIndex].StartedAtUtc <= sessions[secondIndex].StartedAtUtc,
+            "Sessions should be ordered by StartedAtUtc ascending.");
+    }
+
+    [Fact]
     public void ListActiveSessions_ShouldExcludeEndedSessions()
     {
         var module = new SessionModule();
