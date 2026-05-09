@@ -20,3 +20,27 @@ Scope intentionally excludes:
 - messaging, transport, or realtime infrastructure
 - temporary in-Session event-to-notification boundary, which currently lives in Session and only supports notification mapping for the three domain-state-changing events
 - Basket, Workflow, and Operations module logic
+
+## Wiring Workflow Definitions
+
+`SessionModule` can be constructed with a workflow provider so `SetCurrentStep` uses real flow definitions:
+
+```csharp
+using Lothal.FlowRecovery.Modules.Session;
+using Lothal.FlowRecovery.Modules.Workflow;
+
+var workflowProvider = new InMemoryWorkflowDefinitionProvider(
+    new WorkflowDefinition(
+        "flow-sales",
+        new[] { "cart", "payment", "confirm" },
+        new Dictionary<string, IReadOnlyCollection<string>>
+        {
+            ["cart"] = new[] { "payment" },
+            ["payment"] = new[] { "confirm" },
+            ["confirm"] = Array.Empty<string>(),
+        }));
+
+var sessionModule = new SessionModule(workflowProvider);
+```
+
+If a workflow definition is missing for the requested flow, `SetCurrentStep` is rejected and appends `SessionCurrentStepRejectedWorkflowEvent`.
