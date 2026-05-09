@@ -22,6 +22,14 @@ The codebase follows a modular monolith structure with clear module boundaries:
 
 The architecture is event-driven by design. Important state transitions are represented as events so the system can support auditability, recovery, and later integration with external messaging or read models.
 
+## Module Documentation
+
+The links below are a navigation index to existing in-repo module READMEs only, not a full module roadmap or status declaration.
+
+- [Session module](backend/src/Modules/Session/README.md)
+- [Workflow module](backend/src/Modules/Workflow/README.md)
+- [Realtime module](backend/src/Modules/Realtime/Lothal.FlowRecovery.Modules.Realtime/README.md)
+
 ## Session Module
 
 The `Session` module is the first implemented slice and defines the core lifecycle for a recovered flow session.
