@@ -18,16 +18,23 @@ public sealed class EndSessionTests
 
         Assert.False(missingSessionId.Success);
         Assert.Equal("SessionId is required.", missingSessionId.Error);
+        Assert.Null(missingSessionId.Outcome);
+        Assert.Null(missingSessionId.Notification);
         Assert.False(missingEndedBy.Success);
         Assert.Equal("EndedBy is required.", missingEndedBy.Error);
+        Assert.Null(missingEndedBy.Outcome);
+        Assert.Null(missingEndedBy.Notification);
         Assert.False(missingActorType.Success);
         Assert.Equal("ActorType is required.", missingActorType.Error);
+        Assert.Null(missingActorType.Outcome);
         Assert.Null(missingActorType.Notification);
         Assert.False(missingOperatorReason.Success);
         Assert.Equal("Reason is required for operator end.", missingOperatorReason.Error);
+        Assert.Null(missingOperatorReason.Outcome);
         Assert.Null(missingOperatorReason.Notification);
         Assert.False(unknownActorType.Success);
         Assert.Equal("ActorType is invalid.", unknownActorType.Error);
+        Assert.Null(unknownActorType.Outcome);
         Assert.Null(unknownActorType.Notification);
     }
 
