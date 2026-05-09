@@ -7,6 +7,35 @@ public sealed class RealtimeModule
     private readonly object _gate = new();
     private readonly List<Subscription> _subscriptions = new();
 
+    public IDisposable SubscribeToSession(Guid sessionId, Action<SessionNotification> handler)
+    {
+        if (sessionId == Guid.Empty)
+        {
+            throw new ArgumentException("SessionId is required.", nameof(sessionId));
+        }
+
+        ArgumentNullException.ThrowIfNull(handler);
+
+        return Subscribe(notification =>
+        {
+            if (notification is SessionStartedNotification startedNotification &&
+                startedNotification.SessionId == sessionId)
+            {
+                handler(notification);
+            }
+            else if (notification is StepChangedNotification stepChangedNotification &&
+                     stepChangedNotification.SessionId == sessionId)
+            {
+                handler(notification);
+            }
+            else if (notification is SessionEndedNotification endedNotification &&
+                     endedNotification.SessionId == sessionId)
+            {
+                handler(notification);
+            }
+        });
+    }
+
     public IDisposable Subscribe(Action<SessionNotification> handler)
     {
         ArgumentNullException.ThrowIfNull(handler);

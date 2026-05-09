@@ -80,6 +80,50 @@ public sealed class RealtimeModuleTests
     }
 
     [Fact]
+    public void SubscribeToSession_ShouldDeliverMatchingNotification()
+    {
+        var module = new RealtimeModule();
+        var sessionId = Guid.NewGuid();
+        SessionNotification? delivered = null;
+
+        module.SubscribeToSession(sessionId, notification => delivered = notification);
+
+        var notification = CreateStepChangedNotification(sessionId);
+        module.Publish(notification);
+
+        Assert.Same(notification, delivered);
+    }
+
+    [Fact]
+    public void SubscribeToSession_ShouldSuppressNonMatchingNotification()
+    {
+        var module = new RealtimeModule();
+        var subscribedSessionId = Guid.NewGuid();
+        var otherSessionId = Guid.NewGuid();
+        var deliveredCount = 0;
+
+        module.SubscribeToSession(subscribedSessionId, _ => deliveredCount++);
+
+        module.Publish(CreateEndedNotification(otherSessionId));
+
+        Assert.Equal(0, deliveredCount);
+    }
+
+    [Fact]
+    public void SubscribeToSession_ShouldStopDelivery_AfterDisposal()
+    {
+        var module = new RealtimeModule();
+        var sessionId = Guid.NewGuid();
+        var deliveredCount = 0;
+        var subscription = module.SubscribeToSession(sessionId, _ => deliveredCount++);
+
+        subscription.Dispose();
+        module.Publish(CreateNotification(sessionId));
+
+        Assert.Equal(0, deliveredCount);
+    }
+
+    [Fact]
     public void TryPublish_ShouldDeliverStartSessionNotification_FromSessionModule()
     {
         var realtime = new RealtimeModule();
@@ -289,6 +333,26 @@ public sealed class RealtimeModuleTests
     }
 
     [Fact]
+    public void SubscribeToSession_ShouldThrowArgumentException_ForEmptySessionId()
+    {
+        var module = new RealtimeModule();
+
+        var exception = Assert.Throws<ArgumentException>(() => module.SubscribeToSession(Guid.Empty, _ => { }));
+
+        Assert.Equal("sessionId", exception.ParamName);
+    }
+
+    [Fact]
+    public void SubscribeToSession_ShouldThrowArgumentNullException_ForNullHandler()
+    {
+        var module = new RealtimeModule();
+
+        var exception = Assert.Throws<ArgumentNullException>(() => module.SubscribeToSession(Guid.NewGuid(), null!));
+
+        Assert.Equal("handler", exception.ParamName);
+    }
+
+    [Fact]
     public void Publish_ShouldThrowArgumentNullException_ForNullNotification()
     {
         var module = new RealtimeModule();
@@ -299,9 +363,34 @@ public sealed class RealtimeModuleTests
     }
 
     private static SessionNotification CreateNotification() =>
+        CreateNotification(Guid.NewGuid());
+
+    private static SessionNotification CreateNotification(Guid sessionId) =>
         new SessionStartedNotification(
-            Guid.NewGuid(),
+            sessionId,
             "flow-1",
             "operator-a",
             new DateTime(2026, 5, 2, 18, 45, 0, DateTimeKind.Utc));
+
+    private static SessionNotification CreateStepChangedNotification(Guid sessionId) =>
+        new StepChangedNotification(
+            sessionId,
+            "flow-1",
+            "step-2",
+            "step-1",
+            "operator-a",
+            "Operator",
+            null,
+            new DateTime(2026, 5, 2, 18, 46, 0, DateTimeKind.Utc));
+
+    private static SessionNotification CreateEndedNotification(Guid sessionId) =>
+        new SessionEndedNotification(
+            sessionId,
+            "flow-1",
+            "operator-a",
+            "Operator",
+            null,
+            "Active",
+            "Ended",
+            new DateTime(2026, 5, 2, 18, 47, 0, DateTimeKind.Utc));
 }
