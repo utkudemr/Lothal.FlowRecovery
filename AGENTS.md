@@ -269,27 +269,29 @@ Avoid selecting multiple consecutive test-only tasks unless explicitly justified
 
 ## Project Memory
 
-Before planning or coding, agents should read:
+Before planning or coding, agents should read the relevant project memory files:
 
-* `docs/DECISIONS.md`
-* `docs/LESSONS_LEARNED.md`
-* `docs/AGENT_MEMORY.md`
+* `docs/memory/decisions.md` - accepted durable decisions
+* `docs/memory/conventions.md` - stable repository conventions
+* `docs/memory/review-lessons.md` - recurring review lessons
+* `docs/memory/deprecated.md` - deprecated or rejected decisions
 
-Use these files as durable project memory.
+Use project memory as durable guidance, not as a scratchpad.
 
-Update them only when:
+Update memory only when:
 
-* a durable architecture/product decision is made
-* a repeated mistake is identified
-* a workflow rule changes
-* a rejected approach needs to be remembered
+* a durable architecture, product, or workflow decision is accepted
+* a stable convention is established
+* a recurring review lesson should affect future work
+* a decision or approach is explicitly deprecated
 
 Do not write:
 
-* temporary thoughts
+* temporary notes
 * private reasoning
 * speculative future ideas
 * implementation noise
+* content already covered by `README.md` or `docs/ARCHITECTURE.md`
 
 ---
 
@@ -300,11 +302,11 @@ Memory files should remain:
 * concise
 * durable
 * high-signal
+* scoped to accepted decisions, conventions, review lessons, and deprecated decisions
 
 Avoid:
 
-* temporary implementation notes
-* noisy debugging history
-* trivial fixes
-* speculative future ideas
-* duplicate information already present elsewhere
+* duplicating README or architecture content
+* recording one-off fixes
+* storing noisy debugging history
+* adding plans that are not yet accepted

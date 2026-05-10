@@ -1,5 +1,9 @@
 # Decisions
 
+Accepted durable product, architecture, and workflow decisions.
+
+## Accepted Decisions
+
 - Server state is the source of truth.
 - Important state changes are recorded as events.
 - Operator interventions are auditable.
