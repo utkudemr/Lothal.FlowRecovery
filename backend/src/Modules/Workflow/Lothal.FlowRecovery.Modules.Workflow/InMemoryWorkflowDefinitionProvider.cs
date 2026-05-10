@@ -13,7 +13,7 @@ public sealed class InMemoryWorkflowDefinitionProvider : IWorkflowDefinitionProv
             throw new ArgumentException("At least one workflow definition is required.", nameof(definitions));
         }
 
-        var definitionMap = new Dictionary<string, WorkflowDefinition>(StringComparer.Ordinal);
+        var definitionMap = new Dictionary<string, WorkflowDefinition>(StringComparer.OrdinalIgnoreCase);
         foreach (var definition in definitions)
         {
             ArgumentNullException.ThrowIfNull(definition);
@@ -32,7 +32,7 @@ public sealed class InMemoryWorkflowDefinitionProvider : IWorkflowDefinitionProv
 
             if (!definitionMap.TryAdd(normalizedFlowId, definition))
             {
-                throw new ArgumentException($"Duplicate workflow definition for FlowId '{normalizedFlowId}'.", nameof(definitions));
+                throw new ArgumentException($"Duplicate workflow definition for FlowId '{normalizedFlowId}' (case-insensitive match).", nameof(definitions));
             }
         }
 

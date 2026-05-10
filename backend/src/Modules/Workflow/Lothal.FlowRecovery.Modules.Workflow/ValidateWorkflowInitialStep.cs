@@ -40,7 +40,7 @@ public static class ValidateWorkflowInitialStep
             return new ValidateWorkflowInitialStepResult(false, normalizedFlowId, string.Empty, ValidateWorkflowInitialStepOutcome.Rejected, "TargetStep is required.");
         }
 
-        if (!string.Equals(definition.FlowId, normalizedFlowId, StringComparison.Ordinal))
+        if (!string.Equals(definition.FlowId, normalizedFlowId, StringComparison.OrdinalIgnoreCase))
         {
             return new ValidateWorkflowInitialStepResult(false, normalizedFlowId, normalizedTargetStep, ValidateWorkflowInitialStepOutcome.Rejected, "Workflow definition does not match FlowId.");
         }

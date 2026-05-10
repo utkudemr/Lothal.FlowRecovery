@@ -54,6 +54,22 @@ public sealed class ValidateWorkflowCurrentStepTests
         Assert.Equal("Closed", result.TargetStep);
     }
 
+    [Fact]
+    public void WorkflowModuleValidateCurrentStep_ShouldAllowTransition_WhenProviderDefinitionFlowIdCasingDiffers()
+    {
+        var module = new WorkflowModule();
+        var provider = new InMemoryWorkflowDefinitionProvider(CreateDefinition("FLOW-A"));
+
+        var result = module.ValidateCurrentStep(provider, "flow-a", "Draft", "Review");
+
+        Assert.True(result.Success);
+        Assert.Equal(ValidateWorkflowCurrentStepOutcome.Allowed, result.Outcome);
+        Assert.Null(result.Error);
+        Assert.Equal("flow-a", result.FlowId);
+        Assert.Equal("Draft", result.CurrentStep);
+        Assert.Equal("Review", result.TargetStep);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -78,6 +94,36 @@ public sealed class ValidateWorkflowCurrentStepTests
         var provider = new TestWorkflowDefinitionProvider(CreateDefinition("flow-a"));
 
         var result = ValidateWorkflowCurrentStep.Validate(provider, " flow-a ", "Draft", "Review");
+
+        Assert.True(result.Success);
+        Assert.Equal(ValidateWorkflowCurrentStepOutcome.Allowed, result.Outcome);
+        Assert.Null(result.Error);
+        Assert.Equal("flow-a", result.FlowId);
+        Assert.Equal("Draft", result.CurrentStep);
+        Assert.Equal("Review", result.TargetStep);
+    }
+
+    [Fact]
+    public void Validate_ShouldAllowInitialStep_WhenProviderDefinitionFlowIdCasingDiffers()
+    {
+        var provider = new InMemoryWorkflowDefinitionProvider(CreateDefinition("FLOW-A"));
+
+        var result = ValidateWorkflowCurrentStep.Validate(provider, "flow-a", null, "Draft");
+
+        Assert.True(result.Success);
+        Assert.Equal(ValidateWorkflowCurrentStepOutcome.Allowed, result.Outcome);
+        Assert.Null(result.Error);
+        Assert.Equal("flow-a", result.FlowId);
+        Assert.Null(result.CurrentStep);
+        Assert.Equal("Draft", result.TargetStep);
+    }
+
+    [Fact]
+    public void Validate_ShouldAllowTransition_WhenProviderDefinitionFlowIdCasingDiffers()
+    {
+        var provider = new InMemoryWorkflowDefinitionProvider(CreateDefinition("FLOW-A"));
+
+        var result = ValidateWorkflowCurrentStep.Validate(provider, "flow-a", "Draft", "Review");
 
         Assert.True(result.Success);
         Assert.Equal(ValidateWorkflowCurrentStepOutcome.Allowed, result.Outcome);

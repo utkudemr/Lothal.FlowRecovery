@@ -40,14 +40,26 @@ public sealed class InMemoryWorkflowDefinitionProviderTests
     }
 
     [Fact]
+    public void GetDefinition_ShouldMatchFlowIdCaseInsensitively()
+    {
+        var definition = CreateDefinition("FLOW-A");
+        var provider = new InMemoryWorkflowDefinitionProvider(definition);
+
+        var result = provider.GetDefinition("flow-a");
+
+        Assert.Same(definition, result);
+        Assert.Equal("FLOW-A", result?.FlowId);
+    }
+
+    [Fact]
     public void Constructor_ShouldRejectDuplicateFlowIdsAfterNormalization()
     {
         var first = CreateDefinition("flow-a");
-        var second = CreateDefinition("flow-a");
+        var second = CreateDefinition("FLOW-A");
 
         var exception = Assert.Throws<ArgumentException>(() => new InMemoryWorkflowDefinitionProvider(first, second));
 
-        Assert.Contains("Duplicate workflow definition for FlowId 'flow-a'.", exception.Message);
+        Assert.Contains("Duplicate workflow definition for FlowId 'FLOW-A' (case-insensitive match).", exception.Message);
     }
 
     [Theory]

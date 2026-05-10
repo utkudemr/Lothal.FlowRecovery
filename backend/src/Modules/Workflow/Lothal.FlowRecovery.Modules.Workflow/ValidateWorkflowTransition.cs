@@ -48,7 +48,7 @@ public static class ValidateWorkflowTransition
             return new ValidateWorkflowTransitionResult(false, normalizedFlowId, normalizedCurrentStep, string.Empty, ValidateWorkflowTransitionOutcome.Rejected, "TargetStep is required.");
         }
 
-        if (!string.Equals(definition.FlowId, normalizedFlowId, StringComparison.Ordinal))
+        if (!string.Equals(definition.FlowId, normalizedFlowId, StringComparison.OrdinalIgnoreCase))
         {
             return new ValidateWorkflowTransitionResult(false, normalizedFlowId, normalizedCurrentStep, normalizedTargetStep, ValidateWorkflowTransitionOutcome.Rejected, "Workflow definition does not match FlowId.");
         }
