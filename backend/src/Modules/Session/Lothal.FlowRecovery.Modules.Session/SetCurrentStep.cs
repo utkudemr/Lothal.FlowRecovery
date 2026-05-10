@@ -50,22 +50,14 @@ internal sealed class SetCurrentStepHandler
             return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "CurrentStep is required.", null, null);
         }
 
-        var changedBy = command.ChangedBy?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(changedBy))
+        if (!SessionCurrentStepMetadata.TryCreate(
+                command.ChangedBy,
+                command.ActorType,
+                command.Reason,
+                out var metadata,
+                out var metadataError))
         {
-            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "ChangedBy is required.", null, null);
-        }
-
-        var trimmedActorType = command.ActorType?.Trim();
-        if (string.IsNullOrWhiteSpace(trimmedActorType))
-        {
-            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "ActorType is required.", null, null);
-        }
-
-        var actorType = NormalizeActorType(trimmedActorType);
-        if (actorType is null)
-        {
-            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "ActorType is invalid.", null, null);
+            return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, metadataError, null, null);
         }
 
         if (!_store.TryGetSnapshot(command.SessionId, out var snapshot) || snapshot is null)
@@ -73,14 +65,8 @@ internal sealed class SetCurrentStepHandler
             return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "Session not found.", SetCurrentStepOutcome.NotFound, null);
         }
 
-        var reason = command.Reason?.Trim();
-        if (string.IsNullOrWhiteSpace(reason))
-        {
-            reason = null;
-        }
-
-        if (actorType == "Operator" &&
-            reason is null &&
+        if (metadata!.ActorType == "Operator" &&
+            metadata.Reason is null &&
             snapshot.Status == "Active")
         {
             return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "Reason is required for operator step change.", null, null);
@@ -90,15 +76,13 @@ internal sealed class SetCurrentStepHandler
             command.SessionId,
             _currentStepValidator,
             currentStep,
-            changedBy,
-            actorType,
-            reason,
+            metadata,
             out var session,
             out var stepSetEvent,
             out var error);
         if (outcome == SetCurrentStepOutcome.NotActive)
         {
-            error = actorType == "Operator" && reason is null
+            error = metadata.ActorType == "Operator" && metadata.Reason is null
                 ? "Reason is required for operator step change."
                 : "Session is not active.";
 
@@ -124,20 +108,5 @@ internal sealed class SetCurrentStepHandler
         }
 
         return new SetCurrentStepResult(true, session!.SessionId, session.FlowId, session.Status, session.CurrentStep, null, outcome, notification);
-    }
-
-    private static string? NormalizeActorType(string actorType)
-    {
-        if (string.Equals(actorType, "Operator", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Operator";
-        }
-
-        if (string.Equals(actorType, "System", StringComparison.OrdinalIgnoreCase))
-        {
-            return "System";
-        }
-
-        return null;
     }
 }

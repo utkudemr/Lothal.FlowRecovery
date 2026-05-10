@@ -107,14 +107,13 @@ internal sealed class InMemorySessionStore
         Guid sessionId,
         ISessionCurrentStepValidator currentStepValidator,
         string currentStep,
-        string changedBy,
-        string actorType,
-        string? reason,
+        SessionCurrentStepMetadata metadata,
         out SessionRecord? session,
         out SessionCurrentStepSetEvent? stepSetEvent,
         out string? error)
     {
         ArgumentNullException.ThrowIfNull(currentStepValidator);
+        ArgumentNullException.ThrowIfNull(metadata);
 
         lock (_sync)
         {
@@ -137,12 +136,15 @@ internal sealed class InMemorySessionStore
                     rejectedOccurredAtUtc = session.EndedAtUtc.Value;
                 }
 
-                session.RecordCurrentStepRejectedNotActive(currentStep, changedBy, actorType, reason, rejectedOccurredAtUtc);
+                session.RecordCurrentStepRejectedNotActive(
+                    currentStep,
+                    metadata,
+                    rejectedOccurredAtUtc);
                 return SetCurrentStepOutcome.NotActive;
             }
 
             var stepValidation = currentStepValidator.Validate(session.FlowId, session.CurrentStep, currentStep);
-            return session.SetCurrentStep(stepValidation, currentStep, changedBy, actorType, reason, DateTime.UtcNow, out stepSetEvent, out error);
+            return session.SetCurrentStep(stepValidation, currentStep, metadata, DateTime.UtcNow, out stepSetEvent, out error);
         }
     }
 

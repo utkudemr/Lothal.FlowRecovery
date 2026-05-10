@@ -7,6 +7,27 @@ namespace Lothal.FlowRecovery.Modules.Session.Tests;
 public sealed class SetCurrentStepTests
 {
     [Fact]
+    public void SessionCurrentStepMetadata_TryCreate_ShouldNormalizeValues()
+    {
+        var created = SessionCurrentStepMetadata.TryCreate(" operator-b ", "oPeRaToR", "  manual correction  ", out var metadata, out var error);
+        var createdWithBlankReason = SessionCurrentStepMetadata.TryCreate("system-a", "System", "   ", out var metadataWithBlankReason, out var blankReasonError);
+
+        Assert.True(created);
+        Assert.Null(error);
+        Assert.NotNull(metadata);
+        Assert.Equal("operator-b", metadata.ChangedBy);
+        Assert.Equal("Operator", metadata.ActorType);
+        Assert.Equal("manual correction", metadata.Reason);
+
+        Assert.True(createdWithBlankReason);
+        Assert.Null(blankReasonError);
+        Assert.NotNull(metadataWithBlankReason);
+        Assert.Equal("system-a", metadataWithBlankReason.ChangedBy);
+        Assert.Equal("System", metadataWithBlankReason.ActorType);
+        Assert.Null(metadataWithBlankReason.Reason);
+    }
+
+    [Fact]
     public void SetCurrentStep_ShouldSetActiveSession_AndAppendSessionCurrentStepSetEvent()
     {
         var flowId = $"flow-{Guid.NewGuid():N}";
