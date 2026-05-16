@@ -1,4 +1,3 @@
-using System.Reflection;
 using Lothal.FlowRecovery.Modules.Session;
 
 namespace Lothal.FlowRecovery.Modules.Session.Tests;
@@ -127,62 +126,114 @@ public sealed class ListActiveSessionsTests
     }
 
     [Fact]
-    public void ListStaleActiveSessions_ShouldReturnOnlyActiveSessionsOrderedByLastEventAtUtcThenSessionId()
+    public void ListStaleActiveSessions_ShouldIncludeThresholdMatch_ExcludeNewerAndEndedSessions()
     {
-        var module = new SessionModule();
-        var firstFlowId = $"flow-{Guid.NewGuid():N}";
-        var secondFlowId = $"flow-{Guid.NewGuid():N}";
-        var endedFlowId = $"flow-{Guid.NewGuid():N}";
-        var staleBeforeUtc = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        var firstStaleLastEventAtUtc = staleBeforeUtc.AddMinutes(-2);
-        var secondStaleLastEventAtUtc = staleBeforeUtc.AddMinutes(-1);
+        var store = new InMemorySessionStore();
+        var module = new SessionModule(store);
+        var threshold = new DateTime(2026, 5, 16, 9, 30, 0, DateTimeKind.Utc);
+        var matchedEventAtUtc = threshold;
+        var newerEventAtUtc = threshold.AddMinutes(1);
 
-        var firstStart = module.StartSession(new StartSessionCommand(firstFlowId, "operator-a"));
-        var secondStart = module.StartSession(new StartSessionCommand(secondFlowId, "operator-b"));
+        var firstSessionId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var newerSessionId = Guid.Parse("00000000-0000-0000-0000-000000000002");
+        var endedSessionId = Guid.Parse("00000000-0000-0000-0000-000000000003");
 
-        SetSessionLastEventAtUtc(firstStart.SessionId!.Value, firstStaleLastEventAtUtc);
-        SetSessionLastEventAtUtc(secondStart.SessionId!.Value, secondStaleLastEventAtUtc);
+        Assert.True(store.TrySaveIfNoActiveSession(firstSessionId, "flow-a", "operator-a", matchedEventAtUtc, "operator-a", out _, out _, out _));
+        Assert.True(store.TrySaveIfNoActiveSession(newerSessionId, "flow-b", "operator-b", newerEventAtUtc, "operator-b", out _, out _, out _));
+        Assert.True(store.TrySaveIfNoActiveSession(endedSessionId, "flow-c", "operator-c", matchedEventAtUtc, "operator-c", out _, out _, out _));
+        Assert.True(module.EndSession(new EndSessionCommand(endedSessionId, "system", "System", "done")).Success);
 
-        var endedStart = module.StartSession(new StartSessionCommand(endedFlowId, "operator-c"));
-        var endResult = module.EndSession(new EndSessionCommand(endedStart.SessionId!.Value, "system", "System", "done"));
+        var sessions = module.ListStaleActiveSessions(threshold);
 
-        var sessions = module.ListStaleActiveSessions(staleBeforeUtc);
-        var staleSessions = sessions
-            .Where(session => session.SessionId == firstStart.SessionId || session.SessionId == secondStart.SessionId)
-            .ToArray();
+        var staleSession = Assert.Single(sessions);
+        Assert.Equal(firstSessionId, staleSession.SessionId);
+        Assert.Equal(threshold, staleSession.LastEventAtUtc);
+        Assert.DoesNotContain(sessions, session => session.SessionId == newerSessionId);
+        Assert.All(sessions, session => Assert.Equal("Active", session.Status));
+        Assert.All(sessions, session => Assert.True(session.LastEventAtUtc <= threshold));
+        Assert.DoesNotContain(sessions, session => session.SessionId == endedSessionId);
+    }
 
-        Assert.True(endResult.Success);
-        Assert.Equal(new[] { firstStart.SessionId!.Value, secondStart.SessionId!.Value }, sessions.Select(session => session.SessionId));
-        Assert.Equal(2, staleSessions.Length);
-        Assert.Equal(firstStart.SessionId, staleSessions[0].SessionId);
-        Assert.Equal(secondStart.SessionId, staleSessions[1].SessionId);
-        Assert.Equal(firstStaleLastEventAtUtc, staleSessions[0].LastEventAtUtc);
-        Assert.Equal(secondStaleLastEventAtUtc, staleSessions[1].LastEventAtUtc);
-        Assert.All(staleSessions, session => Assert.Equal(nameof(SessionStartedEvent), session.LastEventType));
-        Assert.All(staleSessions, session => Assert.Equal("Active", session.Status));
-        Assert.DoesNotContain(sessions, session => session.SessionId == endedStart.SessionId);
+    [Fact]
+    public void ListStaleActiveSessions_ShouldOrderByLastEventAtUtcThenSessionId()
+    {
+        var store = new InMemorySessionStore();
+        var module = new SessionModule(store);
+        var threshold = new DateTime(2026, 5, 16, 9, 30, 0, DateTimeKind.Utc);
+        var oldestEventAtUtc = threshold.AddMinutes(-2);
+        var tiedEventAtUtc = threshold.AddMinutes(-1);
+
+        var oldestSessionId = Guid.Parse("00000000-0000-0000-0000-000000000003");
+        var tiedFirstSessionId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var tiedSecondSessionId = Guid.Parse("00000000-0000-0000-0000-000000000002");
+
+        Assert.True(store.TrySaveIfNoActiveSession(oldestSessionId, "flow-a", "operator-a", oldestEventAtUtc, "operator-a", out _, out _, out _));
+        Assert.True(store.TrySaveIfNoActiveSession(tiedSecondSessionId, "flow-b", "operator-b", tiedEventAtUtc, "operator-b", out _, out _, out _));
+        Assert.True(store.TrySaveIfNoActiveSession(tiedFirstSessionId, "flow-c", "operator-c", tiedEventAtUtc, "operator-c", out _, out _, out _));
+
+        var sessions = module.ListStaleActiveSessions(threshold);
+
+        Assert.Equal(
+            new[]
+            {
+                oldestSessionId,
+                tiedFirstSessionId,
+                tiedSecondSessionId,
+            },
+            sessions.Select(session => session.SessionId));
+        Assert.All(sessions, session => Assert.Equal("Active", session.Status));
+        Assert.All(sessions, session => Assert.True(session.LastEventAtUtc <= threshold));
+        Assert.Equal(oldestEventAtUtc, sessions[0].LastEventAtUtc);
+        Assert.Equal(tiedEventAtUtc, sessions[1].LastEventAtUtc);
+        Assert.Equal(tiedEventAtUtc, sessions[2].LastEventAtUtc);
     }
 
     [Fact]
     public void ListStaleActiveSessions_ShouldExcludeActiveSessionsWithLastEventAtUtcNewerThanThreshold()
     {
+        var store = new InMemorySessionStore();
+        var module = new SessionModule(store);
+        var threshold = new DateTime(2026, 5, 16, 9, 30, 0, DateTimeKind.Utc);
+        var staleEventAtUtc = threshold;
+        var freshEventAtUtc = threshold.AddMinutes(1);
+
+        var staleSessionId = Guid.Parse("00000000-0000-0000-0000-000000000010");
+        var freshSessionId = Guid.Parse("00000000-0000-0000-0000-000000000011");
+
+        Assert.True(store.TrySaveIfNoActiveSession(staleSessionId, "flow-a", "operator-a", staleEventAtUtc, "operator-a", out _, out _, out _));
+        Assert.True(store.TrySaveIfNoActiveSession(freshSessionId, "flow-b", "operator-b", freshEventAtUtc, "operator-b", out _, out _, out _));
+
+        var sessions = module.ListStaleActiveSessions(threshold);
+
+        Assert.Single(sessions);
+        Assert.Equal(staleSessionId, sessions[0].SessionId);
+        Assert.Equal(staleEventAtUtc, sessions[0].LastEventAtUtc);
+        Assert.All(sessions, session => Assert.Equal("Active", session.Status));
+        Assert.All(sessions, session => Assert.True(session.LastEventAtUtc <= threshold));
+    }
+
+    [Fact]
+    public void ListStaleActiveSessions_ShouldExcludeEndedSessions()
+    {
         var module = new SessionModule();
-        var staleFlowId = $"flow-{Guid.NewGuid():N}";
-        var freshFlowId = $"flow-{Guid.NewGuid():N}";
-        var staleBeforeUtc = DateTime.UtcNow.AddMinutes(-1);
-        var staleLastEventAtUtc = staleBeforeUtc.AddSeconds(-1);
-        var newerLastEventAtUtc = staleBeforeUtc.AddSeconds(1);
+        var activeFlowId = $"flow-{Guid.NewGuid():N}";
+        var endedFlowId = $"flow-{Guid.NewGuid():N}";
 
-        var staleStart = module.StartSession(new StartSessionCommand(staleFlowId, "operator-a"));
-        var freshStart = module.StartSession(new StartSessionCommand(freshFlowId, "operator-b"));
+        var activeStart = module.StartSession(new StartSessionCommand(activeFlowId, "operator-a"));
+        var endedStart = module.StartSession(new StartSessionCommand(endedFlowId, "operator-b"));
+        var endResult = module.EndSession(new EndSessionCommand(endedStart.SessionId!.Value, "system", "System", "done"));
 
-        SetSessionLastEventAtUtc(staleStart.SessionId!.Value, staleLastEventAtUtc);
-        SetSessionLastEventAtUtc(freshStart.SessionId!.Value, newerLastEventAtUtc);
+        var endedSnapshot = module.GetSession(endedStart.SessionId!.Value);
+        var threshold = endedSnapshot!.LastEventAtUtc;
+        var sessions = module.ListStaleActiveSessions(threshold);
 
-        var sessions = module.ListStaleActiveSessions(staleBeforeUtc);
-
-        Assert.Contains(sessions, session => session.SessionId == staleStart.SessionId && session.LastEventAtUtc < staleBeforeUtc);
-        Assert.DoesNotContain(sessions, session => session.SessionId == freshStart.SessionId);
+        Assert.True(activeStart.Success);
+        Assert.True(endedStart.Success);
+        Assert.True(endResult.Success);
+        Assert.Contains(sessions, session => session.SessionId == activeStart.SessionId);
+        Assert.DoesNotContain(sessions, session => session.SessionId == endedStart.SessionId);
+        Assert.All(sessions, session => Assert.Equal("Active", session.Status));
+        Assert.All(sessions, session => Assert.True(session.LastEventAtUtc <= threshold));
     }
 
     [Fact]
@@ -219,31 +270,4 @@ public sealed class ListActiveSessionsTests
         Assert.InRange(stepEvent.OccurredAtUtc, beforeSetUtc, afterSetUtc);
     }
 
-    private static void SetSessionLastEventAtUtc(Guid sessionId, DateTime occurredAtUtc)
-    {
-        var sharedStore = typeof(SessionModule)
-            .GetField("SharedStore", BindingFlags.NonPublic | BindingFlags.Static)!
-            .GetValue(null)!;
-
-        var syncField = sharedStore.GetType().GetField("_sync", BindingFlags.NonPublic | BindingFlags.Instance)!;
-        var sync = syncField.GetValue(sharedStore)!;
-
-        lock (sync)
-        {
-            var sessionsField = sharedStore.GetType().GetField("_sessions", BindingFlags.NonPublic | BindingFlags.Instance)!;
-            var sessions = (Dictionary<Guid, SessionRecord>)sessionsField.GetValue(sharedStore)!;
-            var session = sessions[sessionId];
-
-            var eventsField = typeof(SessionRecord).GetField("_events", BindingFlags.NonPublic | BindingFlags.Instance)!;
-            var events = (List<SessionEvent>)eventsField.GetValue(session)!;
-            events[^1] = RecreateEventWithOccurredAt(events[^1], occurredAtUtc);
-        }
-    }
-
-    private static SessionEvent RecreateEventWithOccurredAt(SessionEvent sessionEvent, DateTime occurredAtUtc) =>
-        sessionEvent switch
-        {
-            SessionStartedEvent started => started with { OccurredAtUtc = occurredAtUtc },
-            _ => throw new InvalidOperationException("Test helper expected the last event to be a start event."),
-        };
 }

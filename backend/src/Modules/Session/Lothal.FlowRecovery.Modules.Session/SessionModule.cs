@@ -5,27 +5,40 @@ namespace Lothal.FlowRecovery.Modules.Session;
 public sealed class SessionModule
 {
   private static readonly InMemorySessionStore SharedStore = new();
+  private readonly InMemorySessionStore _store;
   private readonly StartSessionHandler _startSessionHandler;
   private readonly SetCurrentStepHandler _setCurrentStepHandler;
   private readonly EndSessionHandler _endSessionHandler;
 
   public SessionModule()
-    : this(EmptyWorkflowDefinitionProvider.Instance)
+    : this(SharedStore, EmptyWorkflowDefinitionProvider.Instance)
   {
   }
 
   public SessionModule(IWorkflowDefinitionProvider workflowDefinitions)
-    : this(new WorkflowSessionCurrentStepValidator(workflowDefinitions))
+    : this(SharedStore, new WorkflowSessionCurrentStepValidator(workflowDefinitions))
   {
   }
 
-  private SessionModule(ISessionCurrentStepValidator currentStepValidator)
+  internal SessionModule(InMemorySessionStore store)
+    : this(store, EmptyWorkflowDefinitionProvider.Instance)
   {
+  }
+
+  private SessionModule(InMemorySessionStore store, IWorkflowDefinitionProvider workflowDefinitions)
+    : this(store, new WorkflowSessionCurrentStepValidator(workflowDefinitions))
+  {
+  }
+
+  private SessionModule(InMemorySessionStore store, ISessionCurrentStepValidator currentStepValidator)
+  {
+    ArgumentNullException.ThrowIfNull(store);
     ArgumentNullException.ThrowIfNull(currentStepValidator);
 
-    _startSessionHandler = new StartSessionHandler(SharedStore);
-    _setCurrentStepHandler = new SetCurrentStepHandler(SharedStore, currentStepValidator);
-    _endSessionHandler = new EndSessionHandler(SharedStore);
+    _store = store;
+    _startSessionHandler = new StartSessionHandler(_store);
+    _setCurrentStepHandler = new SetCurrentStepHandler(_store, currentStepValidator);
+    _endSessionHandler = new EndSessionHandler(_store);
   }
 
   public StartSessionResult StartSession(StartSessionCommand command)
@@ -45,7 +58,7 @@ public sealed class SessionModule
 
   public SessionSnapshot? GetSession(Guid sessionId)
   {
-    if (!SharedStore.TryGetSnapshot(sessionId, out var snapshot))
+    if (!_store.TryGetSnapshot(sessionId, out var snapshot))
     {
       return null;
     }
@@ -60,7 +73,7 @@ public sealed class SessionModule
       return null;
     }
 
-    if (!SharedStore.TryGetActiveSnapshotByFlowId(flowId, out var snapshot))
+    if (!_store.TryGetActiveSnapshotByFlowId(flowId, out var snapshot))
     {
       return null;
     }
@@ -70,12 +83,12 @@ public sealed class SessionModule
 
   public IReadOnlyList<SessionSnapshot> ListActiveSessions()
   {
-    return SharedStore.GetActiveSessions();
+    return _store.GetActiveSessions();
   }
 
   public IReadOnlyList<SessionSnapshot> ListStaleActiveSessions(DateTime staleBeforeUtc)
   {
-    return SharedStore.GetStaleActiveSessions(staleBeforeUtc);
+    return _store.GetStaleActiveSessions(staleBeforeUtc);
   }
 }
 

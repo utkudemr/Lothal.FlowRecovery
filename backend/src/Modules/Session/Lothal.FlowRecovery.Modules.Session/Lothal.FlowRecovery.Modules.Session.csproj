@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <InternalsVisibleTo Include="Lothal.FlowRecovery.Modules.Session.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Workflow\Lothal.FlowRecovery.Modules.Workflow\Lothal.FlowRecovery.Modules.Workflow.csproj" />
   </ItemGroup>
 </Project>
