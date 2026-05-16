@@ -72,6 +72,11 @@ public sealed class SessionModule
   {
     return SharedStore.GetActiveSessions();
   }
+
+  public IReadOnlyList<SessionSnapshot> ListStaleActiveSessions(DateTime staleBeforeUtc)
+  {
+    return SharedStore.GetStaleActiveSessions(staleBeforeUtc);
+  }
 }
 
 public sealed record SessionSnapshot(
@@ -81,6 +86,7 @@ public sealed record SessionSnapshot(
   string Status,
   string? CurrentStep,
   DateTime StartedAtUtc,
+  DateTime LastEventAtUtc,
   DateTime? EndedAtUtc,
   IReadOnlyList<SessionEvent> Events);
 

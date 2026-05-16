@@ -15,6 +15,7 @@ internal sealed class InMemorySessionStore
             session.Status,
             session.CurrentStep,
             session.StartedAtUtc,
+            session.Events[^1].OccurredAtUtc,
             session.EndedAtUtc,
             session.Events.ToArray());
     }
@@ -97,6 +98,20 @@ internal sealed class InMemorySessionStore
                 .Select(sessionId => _sessions[sessionId])
                 .Where(session => session.Status == "Active")
                 .OrderBy(session => session.StartedAtUtc)
+                .ThenBy(session => session.SessionId)
+                .Select(CreateSnapshot)
+                .ToArray();
+        }
+    }
+
+    public IReadOnlyList<SessionSnapshot> GetStaleActiveSessions(DateTime staleBeforeUtc)
+    {
+        lock (_sync)
+        {
+            return _activeSessionByFlowId.Values
+                .Select(sessionId => _sessions[sessionId])
+                .Where(session => session.Status == "Active" && session.Events[^1].OccurredAtUtc <= staleBeforeUtc)
+                .OrderBy(session => session.Events[^1].OccurredAtUtc)
                 .ThenBy(session => session.SessionId)
                 .Select(CreateSnapshot)
                 .ToArray();
