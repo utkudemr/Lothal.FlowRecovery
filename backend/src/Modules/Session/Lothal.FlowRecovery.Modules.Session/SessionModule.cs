@@ -87,6 +87,7 @@ public sealed record SessionSnapshot(
   string? CurrentStep,
   DateTime StartedAtUtc,
   DateTime LastEventAtUtc,
+  string LastEventType,
   DateTime? EndedAtUtc,
   IReadOnlyList<SessionEvent> Events);
 

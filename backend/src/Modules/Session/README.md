@@ -8,6 +8,7 @@ It supports:
 - default construction still routes `SetCurrentStep` through workflow validation; without a workflow definition the command is rejected and a `SessionCurrentStepRejectedWorkflowEvent` is appended
 - ending a session with operator/system metadata
 - reading session snapshots with append-only event history
+- listing stale active sessions for operators with `ListStaleActiveSessions(DateTime staleBeforeUtc)`; it returns snapshots for active sessions whose latest event is older than or equal to the provided UTC threshold and does not append events
 - mapping notifications only for domain-state-changing events: `SessionStartedEvent`, `SessionCurrentStepSetEvent`, and `SessionEndedEvent`; audit, no-op, and rejected events are safely ignored by the mapper
 
 Scope currently includes:

@@ -34,6 +34,23 @@ public sealed class ListActiveSessionsTests
         Assert.Null(snapshot);
     }
 
+    [Fact]
+    public void GetSession_ShouldReturnSnapshotWithLastEventTypeFromLatestEvent()
+    {
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var module = SessionWorkflowTestDefinitions.CreateModule(flowId);
+
+        var start = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+        var setResult = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "cart", "operator-b", "System", null));
+
+        var snapshot = module.GetSession(start.SessionId!.Value);
+
+        Assert.True(setResult.Success);
+        Assert.NotNull(snapshot);
+        Assert.Equal(nameof(SessionCurrentStepSetEvent), snapshot!.LastEventType);
+        Assert.Equal(snapshot.Events[^1].OccurredAtUtc, snapshot.LastEventAtUtc);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -141,6 +158,7 @@ public sealed class ListActiveSessionsTests
         Assert.Equal(secondStart.SessionId, staleSessions[1].SessionId);
         Assert.Equal(firstStaleLastEventAtUtc, staleSessions[0].LastEventAtUtc);
         Assert.Equal(secondStaleLastEventAtUtc, staleSessions[1].LastEventAtUtc);
+        Assert.All(staleSessions, session => Assert.Equal(nameof(SessionStartedEvent), session.LastEventType));
         Assert.All(staleSessions, session => Assert.Equal("Active", session.Status));
         Assert.DoesNotContain(sessions, session => session.SessionId == endedStart.SessionId);
     }
@@ -185,6 +203,7 @@ public sealed class ListActiveSessionsTests
         Assert.Equal("cart", setResult.CurrentStep);
         Assert.Equal("cart", snapshot.CurrentStep);
         Assert.Equal(snapshot.Events[^1].OccurredAtUtc, snapshot.LastEventAtUtc);
+        Assert.Equal(nameof(SessionCurrentStepSetEvent), snapshot.LastEventType);
         Assert.InRange(snapshot.LastEventAtUtc, beforeSetUtc, afterSetUtc);
         Assert.Equal(2, snapshot.Events.Count);
 

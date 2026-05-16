@@ -8,6 +8,8 @@ internal sealed class InMemorySessionStore
 
     private static SessionSnapshot CreateSnapshot(SessionRecord session)
     {
+        var lastEvent = session.Events[^1];
+
         return new SessionSnapshot(
             session.SessionId,
             session.FlowId,
@@ -15,7 +17,8 @@ internal sealed class InMemorySessionStore
             session.Status,
             session.CurrentStep,
             session.StartedAtUtc,
-            session.Events[^1].OccurredAtUtc,
+            lastEvent.OccurredAtUtc,
+            lastEvent.GetType().Name,
             session.EndedAtUtc,
             session.Events.ToArray());
     }
