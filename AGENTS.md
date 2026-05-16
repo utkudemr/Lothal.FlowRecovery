@@ -293,6 +293,10 @@ Do not write:
 * implementation noise
 * content already covered by `README.md` or `docs/ARCHITECTURE.md`
 
+## Agent Workflow
+
+Use `docs/agent-workflow/DONE_CONTRACT.md` as the completion checklist for small tasks.
+
 ---
 
 ## Memory Quality Rules
