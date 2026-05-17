@@ -56,17 +56,37 @@ Do not store:
 - private reasoning
 - implementation noise
 
-## Output Style
-Return the review in this order:
-1. findings
-2. risk level
-3. affected files
-4. recommended fixes
-5. memory update suggestion
+## Finding Discipline
 
-Findings should include a severity label:
-- High
-- Medium
-- Low
+A material finding is an issue that could affect correctness, regression risk, architecture boundaries, audit/event consistency, operator traceability, maintainability of changed behavior, or approved task scope.
 
-Findings should be written with file references.
+Use severity labels consistently:
+- High: likely correctness failure, data/audit loss, broken workflow state, security-sensitive issue, or major scope/architecture violation.
+- Medium: credible regression risk, missing required audit/event behavior, incomplete edge handling, boundary ambiguity, or missing validation for changed behavior.
+- Low: minor correctness concern, or localized maintainability/process gap worth fixing but non-blocking.
+
+Avoid style-only, preference-based, or nitpick feedback unless it creates ambiguity, risk, convention drift, or maintenance risk.
+
+Recommend tests only when there is concrete uncovered behavior or regression risk.
+
+Suggest memory updates only for durable decisions, stable conventions, recurring review lessons, or explicitly deprecated approaches. Use `docs/memory/` as the authoritative location without duplicating memory policy.
+
+## Output Format
+
+If material findings exist, list them ordered by severity.
+Each finding should include:
+- severity (`High`, `Medium`, `Low`)
+- file/area
+- issue
+- why it matters
+- minimal suggested fix
+
+If there are no material findings, say: `No material findings.`
+
+For test recommendation, either:
+- specify the uncovered changed behavior that should be validated, or
+- say: `No additional tests recommended.`
+
+For memory recommendation, either:
+- provide a minimal memory update suggestion, or
+- say: `No memory update needed.`
