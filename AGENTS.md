@@ -296,6 +296,7 @@ Do not write:
 ## Agent Workflow
 
 Use `docs/agent-workflow/DONE_CONTRACT.md` as the completion checklist for small tasks.
+Use `docs/agent-workflow/PRESETS.md` for reusable workflow presets.
 
 ---
 
