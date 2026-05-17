@@ -15,7 +15,7 @@ Use these as short defaults for common agent work. See `docs/agent-workflow/DONE
 
 - Purpose: coordinator-led learning workflow for one small next step.
 - Default constraints: keep scope narrow, use the planner/coder/reviewer/tester sequence, and stop if scope grows.
-- Default flow: use `planner_deep` to pick the next smallest item, implement the scoped change with the right coder, review the diff, hand off to tester after approval, then run executable validation or record an explicit skip reason for docs/process-only changes, then summarize the result.
+- Default flow: use `planner_deep` to pick the next smallest item, implement the scoped change with the right coder, review the diff, hand off to tester after approval, then run executable validation or record an explicit skip reason for docs/process-only changes (for example, `docs-only change; no executable validation needed`), then summarize the result.
 - Command examples:
   - `standard-learning-flow`
   - `use standard-learning-flow to inspect one next item`

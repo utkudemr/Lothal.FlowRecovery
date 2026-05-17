@@ -25,6 +25,9 @@ Recommend **no test changes** when:
 - the change is behavior-preserving and does not introduce new executable risk
 - adding tests would only satisfy process compliance
 
+Outside standard learning flow, docs/process-only, formatting-only, or comment-only changes normally do not require executable validation.
+Inside standard learning flow, tester handoff still follows reviewer approval, and docs/process-only changes may be recorded as skipped with an explicit reason.
+
 Use **existing validation only** when:
 - the changed path is already covered by existing tests or validation commands
 - running build/typecheck/existing test commands is sufficient for the risk level
