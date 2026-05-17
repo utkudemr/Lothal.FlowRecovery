@@ -18,6 +18,62 @@ public sealed class ValidateWorkflowTransitionTests
     }
 
     [Fact]
+    public void WorkflowModuleQueryStartStep_ShouldReturnStartStep()
+    {
+        var module = new WorkflowModule();
+        var definition = CreateDefinition();
+
+        var result = module.QueryStartStep(definition);
+
+        Assert.True(result.Success);
+        Assert.Equal(WorkflowStartStepQueryOutcome.Found, result.Outcome);
+        Assert.Equal(definition.FlowId, result.FlowId);
+        Assert.Equal("Draft", result.StartStep);
+        Assert.Null(result.Error);
+    }
+
+    [Fact]
+    public void WorkflowModuleQueryStartStep_ShouldReject_WhenWorkflowDefinitionIsIncomplete()
+    {
+        var module = new WorkflowModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var definition = new WorkflowDefinition(
+            flowId,
+            new[] { "Draft", "Review", "Closed" },
+            null!);
+
+        var result = module.QueryStartStep(definition);
+
+        Assert.False(result.Success);
+        Assert.Equal(WorkflowStartStepQueryOutcome.Rejected, result.Outcome);
+        Assert.Equal(flowId, result.FlowId);
+        Assert.Equal(string.Empty, result.StartStep);
+        Assert.Equal("Workflow definition is incomplete.", result.Error);
+    }
+
+    [Fact]
+    public void WorkflowModuleQueryStartStep_ShouldReject_WhenWorkflowHasMultipleStartCandidates()
+    {
+        var module = new WorkflowModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var definition = new WorkflowDefinition(
+            flowId,
+            new[] { "Draft", "Review", "Closed" },
+            new Dictionary<string, IReadOnlyCollection<string>>
+            {
+                ["Draft"] = Array.Empty<string>(),
+            });
+
+        var result = module.QueryStartStep(definition);
+
+        Assert.False(result.Success);
+        Assert.Equal(WorkflowStartStepQueryOutcome.Rejected, result.Outcome);
+        Assert.Equal(flowId, result.FlowId);
+        Assert.Equal(string.Empty, result.StartStep);
+        Assert.Equal("Workflow definition is incomplete.", result.Error);
+    }
+
+    [Fact]
     public void ValidateInitialStep_ShouldAllow_WhenTargetIsWorkflowStartStep()
     {
         var definition = CreateDefinition();

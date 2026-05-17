@@ -13,8 +13,39 @@ public enum ValidateWorkflowInitialStepOutcome
     Allowed,
 }
 
+public sealed record WorkflowStartStepQueryResult(
+    bool Success,
+    string FlowId,
+    string StartStep,
+    WorkflowStartStepQueryOutcome Outcome,
+    string? Error);
+
+public enum WorkflowStartStepQueryOutcome
+{
+    Rejected,
+    Found,
+}
+
 public static class ValidateWorkflowInitialStep
 {
+    public static WorkflowStartStepQueryResult QueryStartStep(WorkflowDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+
+        var normalizedFlowId = definition.FlowId?.Trim() ?? string.Empty;
+        if (definition.Steps is null || definition.AllowedTransitions is null)
+        {
+            return new WorkflowStartStepQueryResult(false, normalizedFlowId, string.Empty, WorkflowStartStepQueryOutcome.Rejected, "Workflow definition is incomplete.");
+        }
+
+        if (!TryGetWorkflowStartStep(definition, out var workflowStartStep))
+        {
+            return new WorkflowStartStepQueryResult(false, normalizedFlowId, string.Empty, WorkflowStartStepQueryOutcome.Rejected, "Workflow definition is incomplete.");
+        }
+
+        return new WorkflowStartStepQueryResult(true, normalizedFlowId, workflowStartStep!, WorkflowStartStepQueryOutcome.Found, null);
+    }
+
     public static ValidateWorkflowInitialStepResult Validate(
         WorkflowDefinition definition,
         string? flowId,
@@ -50,12 +81,13 @@ public static class ValidateWorkflowInitialStep
             return new ValidateWorkflowInitialStepResult(false, normalizedFlowId, normalizedTargetStep, ValidateWorkflowInitialStepOutcome.Rejected, "TargetStep is not defined.");
         }
 
-        if (!TryGetWorkflowStartStep(definition, out var workflowStartStep))
+        var startStepQuery = QueryStartStep(definition);
+        if (!startStepQuery.Success)
         {
             return new ValidateWorkflowInitialStepResult(false, normalizedFlowId, normalizedTargetStep, ValidateWorkflowInitialStepOutcome.Rejected, "Workflow definition is incomplete.");
         }
 
-        if (!string.Equals(workflowStartStep, normalizedTargetStep, StringComparison.Ordinal))
+        if (!string.Equals(startStepQuery.StartStep, normalizedTargetStep, StringComparison.Ordinal))
         {
             return new ValidateWorkflowInitialStepResult(false, normalizedFlowId, normalizedTargetStep, ValidateWorkflowInitialStepOutcome.Rejected, "TargetStep must be workflow start step.");
         }

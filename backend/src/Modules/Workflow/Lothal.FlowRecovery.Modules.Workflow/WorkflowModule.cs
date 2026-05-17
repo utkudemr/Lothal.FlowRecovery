@@ -10,6 +10,11 @@ public sealed class WorkflowModule
         return ValidateWorkflowInitialStep.Validate(definition, flowId, targetStep);
     }
 
+    public WorkflowStartStepQueryResult QueryStartStep(WorkflowDefinition definition)
+    {
+        return ValidateWorkflowInitialStep.QueryStartStep(definition);
+    }
+
     public ValidateWorkflowCurrentStepResult ValidateCurrentStep(
         IWorkflowDefinitionProvider workflowDefinitions,
         string? flowId,
