@@ -1,4 +1,5 @@
 using Lothal.FlowRecovery.Modules.Session;
+using Lothal.FlowRecovery.Modules.Workflow;
 using static Lothal.FlowRecovery.Modules.Session.Tests.SessionWorkflowTestDefinitions;
 
 namespace Lothal.FlowRecovery.Modules.Session.Tests;
@@ -58,6 +59,41 @@ public sealed class StartSessionTests
         Assert.Null(second.Notification);
         Assert.NotNull(session);
         Assert.Equal("Active", session.Status);
+        Assert.Equal(2, session.Events.Count);
+        Assert.IsType<SessionStartedEvent>(session.Events[0]);
+
+        var duplicateAuditEvent = Assert.IsType<SessionStartDuplicateAuditEvent>(session.Events[1]);
+        Assert.Equal(first.SessionId.Value, duplicateAuditEvent.SessionId);
+        Assert.Equal(flowId, duplicateAuditEvent.FlowId);
+        Assert.Equal("operator-b", duplicateAuditEvent.RequestedBy);
+        Assert.Equal("Active", duplicateAuditEvent.CurrentStatus);
+        Assert.True(duplicateAuditEvent.OccurredAtUtc >= first.StartedAtUtc);
+    }
+
+    [Fact]
+    public void StartSession_ShouldPreserveStartStep_OnDuplicate_WhenWorkflowDefinitionIsUnavailableAfterFirstStart()
+    {
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var workflowDefinition = CreateCheckoutWorkflow(flowId);
+        var workflowDefinitions = new MutableWorkflowDefinitionProvider(workflowDefinition);
+        var module = new SessionModule(workflowDefinitions);
+
+        var first = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+        workflowDefinitions.Clear();
+        var second = module.StartSession(new StartSessionCommand(flowId, "operator-b"));
+        var session = module.GetSession(first.SessionId!.Value);
+
+        Assert.True(first.Success);
+        Assert.Equal("cart", first.StartStep);
+        var firstNotification = Assert.IsType<SessionStartedNotification>(first.Notification);
+        Assert.Equal("cart", firstNotification.StartStep);
+        Assert.True(second.SessionId.HasValue);
+        Assert.Equal(first.SessionId, second.SessionId);
+        Assert.False(second.Success);
+        Assert.Equal("cart", second.StartStep);
+        Assert.Equal(StartSessionOutcome.DuplicateActiveSession, second.Outcome);
+        Assert.Null(second.Notification);
+        Assert.NotNull(session);
         Assert.Equal(2, session.Events.Count);
         Assert.IsType<SessionStartedEvent>(session.Events[0]);
 
@@ -136,5 +172,27 @@ public sealed class StartSessionTests
         Assert.Null(session.CurrentStep);
         Assert.Single(session.Events);
         Assert.IsType<SessionStartedEvent>(session.Events[0]);
+    }
+
+    private sealed class MutableWorkflowDefinitionProvider : IWorkflowDefinitionProvider
+    {
+        private WorkflowDefinition? _definition;
+
+        public MutableWorkflowDefinitionProvider(WorkflowDefinition? definition)
+        {
+            _definition = definition;
+        }
+
+        public void Clear()
+        {
+            _definition = null;
+        }
+
+        public WorkflowDefinition? GetDefinition(string flowId)
+        {
+            return _definition is not null && string.Equals(_definition.FlowId?.Trim(), flowId, StringComparison.OrdinalIgnoreCase)
+                ? _definition
+                : null;
+        }
     }
 }

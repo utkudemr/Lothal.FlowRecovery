@@ -4,6 +4,7 @@ internal sealed class InMemorySessionStore
 {
     private readonly object _sync = new();
     private readonly Dictionary<Guid, SessionRecord> _sessions = new();
+    private readonly Dictionary<Guid, string?> _startStepBySessionId = new();
     private readonly Dictionary<string, Guid> _activeSessionByFlowId = new(StringComparer.OrdinalIgnoreCase);
 
     private static SessionSnapshot CreateSnapshot(SessionRecord session)
@@ -33,6 +34,31 @@ internal sealed class InMemorySessionStore
         out SessionRecord? activeSession,
         out SessionStartedEvent? startedEvent)
     {
+        return TrySaveIfNoActiveSession(
+            sessionId,
+            flowId,
+            startedBy,
+            startedAtUtc,
+            duplicateRequestedBy,
+            null,
+            out session,
+            out activeSession,
+            out _,
+            out startedEvent);
+    }
+
+    public bool TrySaveIfNoActiveSession(
+        Guid sessionId,
+        string flowId,
+        string startedBy,
+        DateTime startedAtUtc,
+        string duplicateRequestedBy,
+        string? startStep,
+        out SessionRecord? session,
+        out SessionRecord? activeSession,
+        out string? activeStartStep,
+        out SessionStartedEvent? startedEvent)
+    {
         lock (_sync)
         {
             startedEvent = null;
@@ -40,14 +66,17 @@ internal sealed class InMemorySessionStore
             if (_activeSessionByFlowId.TryGetValue(flowId, out var activeSessionId) &&
                 _sessions.TryGetValue(activeSessionId, out activeSession))
             {
+                _startStepBySessionId.TryGetValue(activeSessionId, out activeStartStep);
                 activeSession.RecordDuplicateStartAudit(duplicateRequestedBy, DateTime.UtcNow);
                 session = null;
                 return false;
             }
 
+            activeStartStep = startStep;
             startedEvent = new SessionStartedEvent(sessionId, flowId, startedBy, startedAtUtc);
             session = SessionRecord.Create(sessionId, flowId, startedBy, startedAtUtc, startedEvent);
             _sessions[session.SessionId] = session;
+            _startStepBySessionId[session.SessionId] = startStep;
             _activeSessionByFlowId[session.FlowId] = session.SessionId;
             activeSession = null;
             return true;

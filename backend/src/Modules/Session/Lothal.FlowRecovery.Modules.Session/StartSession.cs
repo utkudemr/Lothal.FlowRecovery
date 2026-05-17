@@ -52,8 +52,9 @@ internal sealed class StartSessionHandler
 
         var startedAtUtc = DateTime.UtcNow;
         var sessionId = Guid.NewGuid();
+        var startStep = ResolveStartStep(flowId);
 
-        if (!_store.TrySaveIfNoActiveSession(sessionId, flowId, startedBy, startedAtUtc, startedBy, out var session, out var activeSession, out var startedEvent))
+        if (!_store.TrySaveIfNoActiveSession(sessionId, flowId, startedBy, startedAtUtc, startedBy, startStep, out var session, out var activeSession, out var activeStartStep, out var startedEvent))
         {
             return new StartSessionResult(
                 false,
@@ -61,13 +62,12 @@ internal sealed class StartSessionHandler
                 activeSession.FlowId,
                 activeSession.Status,
                 activeSession.StartedAtUtc,
-                ResolveStartStep(activeSession.FlowId),
+                activeStartStep,
                 "Active session already exists.",
                 StartSessionOutcome.DuplicateActiveSession,
                 null);
         }
 
-        var startStep = ResolveStartStep(session!.FlowId);
         var notification = SessionNotificationMapper.Map(startedEvent!);
         if (notification is null)
         {
@@ -81,7 +81,7 @@ internal sealed class StartSessionHandler
 
         notification = startedNotification with { StartStep = startStep };
 
-        return new StartSessionResult(true, session.SessionId, session.FlowId, session.Status, session.StartedAtUtc, startStep, null, StartSessionOutcome.Started, notification);
+        return new StartSessionResult(true, session!.SessionId, session.FlowId, session.Status, session.StartedAtUtc, startStep, null, StartSessionOutcome.Started, notification);
     }
 
     private string? ResolveStartStep(string flowId)
