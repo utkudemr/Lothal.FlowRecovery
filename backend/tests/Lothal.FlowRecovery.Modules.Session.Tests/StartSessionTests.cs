@@ -91,6 +91,7 @@ public sealed class StartSessionTests
         Assert.Equal(flowId, notification.FlowId);
         Assert.Equal("operator-a", notification.StartedBy);
         Assert.Equal(result.StartedAtUtc, notification.OccurredAtUtc);
+        Assert.Null(notification.StartStep);
         Assert.NotNull(session);
         var startedEvent = Assert.IsType<SessionStartedEvent>(session.Events[0]);
         Assert.Equal(result.SessionId, startedEvent.SessionId);
@@ -110,6 +111,8 @@ public sealed class StartSessionTests
 
         Assert.True(result.Success);
         Assert.Equal("cart", result.StartStep);
+        var notification = Assert.IsType<SessionStartedNotification>(result.Notification);
+        Assert.Equal(result.StartStep, notification.StartStep);
         Assert.NotNull(session);
         Assert.Null(session.CurrentStep);
         Assert.Single(session.Events);
@@ -127,6 +130,8 @@ public sealed class StartSessionTests
 
         Assert.True(result.Success);
         Assert.Null(result.StartStep);
+        var notification = Assert.IsType<SessionStartedNotification>(result.Notification);
+        Assert.Null(notification.StartStep);
         Assert.NotNull(session);
         Assert.Null(session.CurrentStep);
         Assert.Single(session.Events);

@@ -16,7 +16,8 @@ public sealed record SessionStartedNotification(
     Guid SessionId,
     string FlowId,
     string StartedBy,
-    DateTime OccurredAtUtc) : SessionNotification(OccurredAtUtc);
+    DateTime OccurredAtUtc,
+    string? StartStep = null) : SessionNotification(OccurredAtUtc);
 
 public sealed record SessionEndedNotification(
     Guid SessionId,

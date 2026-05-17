@@ -67,13 +67,21 @@ internal sealed class StartSessionHandler
                 null);
         }
 
+        var startStep = ResolveStartStep(session!.FlowId);
         var notification = SessionNotificationMapper.Map(startedEvent!);
         if (notification is null)
         {
             throw new InvalidOperationException("Invariant violation: started outcome must produce a start-session notification.");
         }
 
-        return new StartSessionResult(true, session!.SessionId, session.FlowId, session.Status, session.StartedAtUtc, ResolveStartStep(session.FlowId), null, StartSessionOutcome.Started, notification);
+        if (notification is not SessionStartedNotification startedNotification)
+        {
+            throw new InvalidOperationException("Invariant violation: started outcome must produce a start-session notification.");
+        }
+
+        notification = startedNotification with { StartStep = startStep };
+
+        return new StartSessionResult(true, session.SessionId, session.FlowId, session.Status, session.StartedAtUtc, startStep, null, StartSessionOutcome.Started, notification);
     }
 
     private string? ResolveStartStep(string flowId)
