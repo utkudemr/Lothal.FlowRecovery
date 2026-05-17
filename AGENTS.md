@@ -180,9 +180,9 @@ follow this process:
 
 4. If reviewer approves:
 
-   * use tester to validate the change and run relevant tests
+   * hand off to tester for validation; executable tests may be skipped only for docs/process-only changes with an explicit reason
 
-5. Do not skip coder, reviewer, or tester.
+5. Do not skip coder, reviewer, or tester handoff.
 
 6. Keep scope small and file-scoped.
 
