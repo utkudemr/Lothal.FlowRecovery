@@ -41,6 +41,39 @@ Do not propose a new command, module, or abstraction if an existing one can be e
 - do not introduce generic frameworks or abstractions for a single use case
 - keep the plan focused on one outcome
 
+## Test Decision Guidance
+
+When planning implementation work, recommend the smallest validation path that matches the risk.
+
+Recommend **no tests** when:
+- the change is documentation-only, formatting-only, or wording-only
+- no runtime behavior, workflow state, or validation rule changes are expected
+
+Recommend **existing validation only** when:
+- the change is behavior-preserving
+- existing tests or validation commands already cover the touched path
+- the plan can name relevant validation commands when practical
+
+Recommend **updating existing tests** when:
+- existing tests already cover the behavior being changed
+- expectations need to move with the implementation
+- extending nearby tests is clearer than creating parallel test files
+
+Recommend **adding new tests** when:
+- new runtime behavior, branching, validation, state transition, audit/event behavior, or bug-fix behavior is introduced
+- no existing tests cover the risk well enough
+- review alone is not a durable guard for the change
+
+Recommend **routing to tester** when:
+- executable behavior changed and focused validation judgment is still needed
+- workflow, state, auditability, idempotency, or operator-facing behavior is affected
+- reviewer approval exists and targeted regression validation is still useful
+
+Do not require tester for documentation-only changes.
+Do not require tester for behavior-preserving changes.
+Do not add tests only for process compliance.
+Use `docs/agent-workflow/DONE_CONTRACT.md` to record validation performed or skipped checks.
+
 ## Duplication Guardrails
 Before proposing a new feature or command, ask:
 - does a similar command already exist?
