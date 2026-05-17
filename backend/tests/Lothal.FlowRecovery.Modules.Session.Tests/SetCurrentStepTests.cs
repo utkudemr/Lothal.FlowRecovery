@@ -274,7 +274,7 @@ public sealed class SetCurrentStepTests
     }
 
     [Fact]
-    public void SetCurrentStep_ShouldReject_WhenEndedSessionOperatorReasonIsMissing_AndAppendRejectedEvent()
+    public void SetCurrentStep_ShouldReject_WhenEndedSessionOperatorReasonIsMissing_AndAppendNoEvent()
     {
         var flowId = $"flow-{Guid.NewGuid():N}";
         var module = CreateModule(flowId);
@@ -289,31 +289,25 @@ public sealed class SetCurrentStepTests
 
         Assert.False(nullReasonResult.Success);
         Assert.Equal("Reason is required for operator step change.", nullReasonResult.Error);
-        Assert.Equal("Ended", nullReasonResult.Status);
-        Assert.Equal(SetCurrentStepOutcome.NotActive, nullReasonResult.Outcome);
+        Assert.Equal("Rejected", nullReasonResult.Status);
+        Assert.Null(nullReasonResult.Outcome);
         Assert.Null(nullReasonResult.Notification);
 
         Assert.False(blankReasonResult.Success);
         Assert.Equal("Reason is required for operator step change.", blankReasonResult.Error);
-        Assert.Equal("Ended", blankReasonResult.Status);
-        Assert.Equal(SetCurrentStepOutcome.NotActive, blankReasonResult.Outcome);
+        Assert.Equal("Rejected", blankReasonResult.Status);
+        Assert.Null(blankReasonResult.Outcome);
         Assert.Null(blankReasonResult.Notification);
 
         Assert.NotNull(session);
         Assert.Equal("Ended", session.Status);
         Assert.Equal("cart", session.CurrentStep);
-        Assert.Equal(5, session.Events.Count);
-
-        var rejectedEvents = session.Events.OfType<SessionCurrentStepRejectedNotActiveEvent>().ToArray();
-        Assert.Equal(2, rejectedEvents.Length);
-        Assert.Equal("review", rejectedEvents[0].RequestedStep);
-        Assert.Null(rejectedEvents[0].Reason);
-        Assert.Equal("confirm", rejectedEvents[1].RequestedStep);
-        Assert.Null(rejectedEvents[1].Reason);
+        Assert.Equal(3, session.Events.Count);
+        Assert.Empty(session.Events.OfType<SessionCurrentStepRejectedNotActiveEvent>());
     }
 
     [Fact]
-    public void SetCurrentStep_ShouldAppendOneRejectedEventPerRetry_WhenSessionIsEnded()
+    public void SetCurrentStep_ShouldAppendOneRejectedEventPerSystemRetryWithoutReason_WhenSessionIsEnded()
     {
         var flowId = $"flow-{Guid.NewGuid():N}";
         var module = CreateModule(flowId);
@@ -322,8 +316,8 @@ public sealed class SetCurrentStepTests
         Assert.True(module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId!.Value, "cart", "operator-b", "Operator", "initial step")).Success);
         Assert.True(module.EndSession(new EndSessionCommand(start.SessionId.Value, "operator-a", "Operator", "done")).Success);
 
-        var firstRetry = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, "review", "operator-c", "System", "retry-1"));
-        var secondRetry = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, "confirm", "operator-d", "System", "retry-2"));
+        var firstRetry = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, "review", "operator-c", "System", null));
+        var secondRetry = module.SetCurrentStep(new SetCurrentStepCommand(start.SessionId.Value, "confirm", "operator-d", "System", "   "));
         var session = module.GetSession(start.SessionId.Value);
 
         Assert.False(firstRetry.Success);
@@ -353,6 +347,8 @@ public sealed class SetCurrentStepTests
         Assert.Equal("review", firstRejectedEvent.RequestedStep);
         Assert.Equal("cart", secondRejectedEvent.CurrentStep);
         Assert.Equal("confirm", secondRejectedEvent.RequestedStep);
+        Assert.Null(firstRejectedEvent.Reason);
+        Assert.Null(secondRejectedEvent.Reason);
         Assert.Equal("Ended", firstRejectedEvent.CurrentStatus);
         Assert.Equal("Ended", secondRejectedEvent.CurrentStatus);
         Assert.True(firstRejectedEvent.OccurredAtUtc >= session.EndedAtUtc.Value);

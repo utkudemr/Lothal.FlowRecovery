@@ -66,8 +66,7 @@ internal sealed class SetCurrentStepHandler
         }
 
         if (metadata!.ActorType == "Operator" &&
-            metadata.Reason is null &&
-            snapshot.Status == "Active")
+            metadata.Reason is null)
         {
             return new SetCurrentStepResult(false, command.SessionId, string.Empty, "Rejected", null, "Reason is required for operator step change.", null, null);
         }
