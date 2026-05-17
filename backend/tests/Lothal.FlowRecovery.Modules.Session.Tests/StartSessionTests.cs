@@ -1,4 +1,5 @@
 using Lothal.FlowRecovery.Modules.Session;
+using static Lothal.FlowRecovery.Modules.Session.Tests.SessionWorkflowTestDefinitions;
 
 namespace Lothal.FlowRecovery.Modules.Session.Tests;
 
@@ -14,6 +15,7 @@ public sealed class StartSessionTests
         Assert.False(result.Success);
         Assert.Equal("FlowId is required.", result.Error);
         Assert.Null(result.SessionId);
+        Assert.Null(result.StartStep);
         Assert.Null(result.Outcome);
         Assert.Null(result.Notification);
     }
@@ -29,6 +31,7 @@ public sealed class StartSessionTests
         Assert.False(result.Success);
         Assert.Equal("StartedBy is required.", result.Error);
         Assert.Equal(flowId, result.FlowId);
+        Assert.Null(result.StartStep);
         Assert.Null(result.Outcome);
         Assert.Null(result.Notification);
     }
@@ -49,6 +52,7 @@ public sealed class StartSessionTests
         Assert.Equal(first.FlowId, second.FlowId);
         Assert.Equal(first.Status, second.Status);
         Assert.Equal(first.StartedAtUtc, second.StartedAtUtc);
+        Assert.Null(second.StartStep);
         Assert.Equal("Active session already exists.", second.Error);
         Assert.Equal(StartSessionOutcome.DuplicateActiveSession, second.Outcome);
         Assert.Null(second.Notification);
@@ -79,6 +83,7 @@ public sealed class StartSessionTests
         Assert.Equal(flowId, result.FlowId);
         Assert.Equal("Active", result.Status);
         Assert.NotNull(result.StartedAtUtc);
+        Assert.Null(result.StartStep);
         Assert.Null(result.Error);
         Assert.Equal(StartSessionOutcome.Started, result.Outcome);
         var notification = Assert.IsType<SessionStartedNotification>(result.Notification);
@@ -92,5 +97,39 @@ public sealed class StartSessionTests
         Assert.Equal(flowId, startedEvent.FlowId);
         Assert.Equal("operator-a", startedEvent.StartedBy);
         Assert.Equal(result.StartedAtUtc, startedEvent.OccurredAtUtc);
+    }
+
+    [Fact]
+    public void StartSession_ShouldReturnStartStep_WhenWorkflowDefinitionIsAvailable()
+    {
+        var flowId = $"flow-{Guid.NewGuid():N}";
+        var module = CreateModule(flowId);
+
+        var result = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+        var session = module.GetSession(result.SessionId!.Value);
+
+        Assert.True(result.Success);
+        Assert.Equal("cart", result.StartStep);
+        Assert.NotNull(session);
+        Assert.Null(session.CurrentStep);
+        Assert.Single(session.Events);
+        Assert.IsType<SessionStartedEvent>(session.Events[0]);
+    }
+
+    [Fact]
+    public void StartSession_ShouldLeaveStartStepNull_WhenWorkflowDefinitionIsMissing()
+    {
+        var module = CreateModule();
+        var flowId = $"flow-{Guid.NewGuid():N}";
+
+        var result = module.StartSession(new StartSessionCommand(flowId, "operator-a"));
+        var session = module.GetSession(result.SessionId!.Value);
+
+        Assert.True(result.Success);
+        Assert.Null(result.StartStep);
+        Assert.NotNull(session);
+        Assert.Null(session.CurrentStep);
+        Assert.Single(session.Events);
+        Assert.IsType<SessionStartedEvent>(session.Events[0]);
     }
 }

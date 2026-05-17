@@ -16,7 +16,7 @@ public sealed class SessionModule
   }
 
   public SessionModule(IWorkflowDefinitionProvider workflowDefinitions)
-    : this(SharedStore, new WorkflowSessionCurrentStepValidator(workflowDefinitions))
+    : this(SharedStore, workflowDefinitions)
   {
   }
 
@@ -26,17 +26,21 @@ public sealed class SessionModule
   }
 
   private SessionModule(InMemorySessionStore store, IWorkflowDefinitionProvider workflowDefinitions)
-    : this(store, new WorkflowSessionCurrentStepValidator(workflowDefinitions))
+    : this(store, workflowDefinitions, new WorkflowSessionCurrentStepValidator(workflowDefinitions))
   {
   }
 
-  private SessionModule(InMemorySessionStore store, ISessionCurrentStepValidator currentStepValidator)
+  private SessionModule(
+    InMemorySessionStore store,
+    IWorkflowDefinitionProvider workflowDefinitions,
+    ISessionCurrentStepValidator currentStepValidator)
   {
     ArgumentNullException.ThrowIfNull(store);
+    ArgumentNullException.ThrowIfNull(workflowDefinitions);
     ArgumentNullException.ThrowIfNull(currentStepValidator);
 
     _store = store;
-    _startSessionHandler = new StartSessionHandler(_store);
+    _startSessionHandler = new StartSessionHandler(_store, workflowDefinitions);
     _setCurrentStepHandler = new SetCurrentStepHandler(_store, currentStepValidator);
     _endSessionHandler = new EndSessionHandler(_store);
   }

@@ -1,3 +1,5 @@
+using Lothal.FlowRecovery.Modules.Workflow;
+
 namespace Lothal.FlowRecovery.Modules.Session;
 
 public sealed record StartSessionCommand(string FlowId, string StartedBy);
@@ -8,6 +10,7 @@ public sealed record StartSessionResult(
     string FlowId,
     string Status,
     DateTime? StartedAtUtc,
+    string? StartStep,
     string? Error,
     StartSessionOutcome? Outcome,
     SessionNotification? Notification);
@@ -21,10 +24,15 @@ public enum StartSessionOutcome
 internal sealed class StartSessionHandler
 {
     private readonly InMemorySessionStore _store;
+    private readonly IWorkflowDefinitionProvider _workflowDefinitions;
 
-    public StartSessionHandler(InMemorySessionStore store)
+    public StartSessionHandler(InMemorySessionStore store, IWorkflowDefinitionProvider workflowDefinitions)
     {
+        ArgumentNullException.ThrowIfNull(store);
+        ArgumentNullException.ThrowIfNull(workflowDefinitions);
+
         _store = store;
+        _workflowDefinitions = workflowDefinitions;
     }
 
     public StartSessionResult Handle(StartSessionCommand command)
@@ -34,12 +42,12 @@ internal sealed class StartSessionHandler
 
         if (string.IsNullOrWhiteSpace(flowId))
         {
-            return new StartSessionResult(false, null, string.Empty, "Rejected", null, "FlowId is required.", null, null);
+            return new StartSessionResult(false, null, string.Empty, "Rejected", null, null, "FlowId is required.", null, null);
         }
 
         if (string.IsNullOrWhiteSpace(startedBy))
         {
-            return new StartSessionResult(false, null, flowId, "Rejected", null, "StartedBy is required.", null, null);
+            return new StartSessionResult(false, null, flowId, "Rejected", null, null, "StartedBy is required.", null, null);
         }
 
         var startedAtUtc = DateTime.UtcNow;
@@ -53,6 +61,7 @@ internal sealed class StartSessionHandler
                 activeSession.FlowId,
                 activeSession.Status,
                 activeSession.StartedAtUtc,
+                ResolveStartStep(activeSession.FlowId),
                 "Active session already exists.",
                 StartSessionOutcome.DuplicateActiveSession,
                 null);
@@ -64,6 +73,23 @@ internal sealed class StartSessionHandler
             throw new InvalidOperationException("Invariant violation: started outcome must produce a start-session notification.");
         }
 
-        return new StartSessionResult(true, session!.SessionId, session.FlowId, session.Status, session.StartedAtUtc, null, StartSessionOutcome.Started, notification);
+        return new StartSessionResult(true, session!.SessionId, session.FlowId, session.Status, session.StartedAtUtc, ResolveStartStep(session.FlowId), null, StartSessionOutcome.Started, notification);
+    }
+
+    private string? ResolveStartStep(string flowId)
+    {
+        var definition = _workflowDefinitions.GetDefinition(flowId);
+        if (definition is null)
+        {
+            return null;
+        }
+
+        if (!string.Equals(definition.FlowId?.Trim(), flowId, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var query = ValidateWorkflowInitialStep.QueryStartStep(definition);
+        return query.Success ? query.StartStep : null;
     }
 }
