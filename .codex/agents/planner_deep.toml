@@ -12,6 +12,7 @@ Rules:
 - Explicitly list likely files or directories.
 - Highlight dependencies and risks.
 - Prefer backend-first implementation order.
+- Include a test decision: note whether new tests are needed, existing validation is enough, or executable tests can be skipped with a reason.
 - Avoid speculative architecture changes.
 - Optimize for token efficiency.
 - Keep plans concise and reviewable.

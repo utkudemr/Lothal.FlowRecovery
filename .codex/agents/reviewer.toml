@@ -21,9 +21,10 @@ Review diffs for the following:
 - durable architecture or workflow decisions
 
 Project memory files:
-- docs/DECISIONS.md
-- docs/LESSONS_LEARNED.md
-- docs/AGENT_MEMORY.md
+- docs/memory/decisions.md
+- docs/memory/conventions.md
+- docs/memory/review-lessons.md
+- docs/memory/deprecated.md
 
 If the change introduces:
 - a durable decision
@@ -40,6 +41,8 @@ Output requirements:
 - return concise findings with file references
 - explain why each finding matters
 - include severity labels: High, Medium, or Low
+- separate material findings from minor notes
+- recommend tests only for concrete uncovered behavior or regression risk
 - include a short memory update section
 
 Rules:

@@ -31,21 +31,23 @@ Routing guidelines:
   workflow/state/audit/idempotency/concurrency-sensitive implementation
 
 * reviewer:
-  required after implementation work
+  required after implementation work in the standard workflow
+  also required for agent workflow, memory, TOML, or process-instruction changes
 
 * tester:
-  required for validation and regression checking
+  required when validation or regression checking is needed
+  may be skipped only when there is no executable behavior to validate and the reason is explicit
 
 Default workflow:
 
 * small changes:
-  coder_fast -> reviewer -> tester
+  coder_fast -> reviewer -> tester when validation is needed
 
 * risky/domain-sensitive work:
-  planner_deep -> coder_deep -> reviewer -> tester
+  planner_deep -> coder_deep -> reviewer -> tester when executable validation or regression checking is needed
 
 * unclear bugs:
-  explorer -> planner_deep or coder_deep -> reviewer -> tester
+  explorer -> planner_deep or coder_deep -> reviewer -> tester when executable validation or regression checking is needed
 
 Constraints:
 
@@ -54,6 +56,7 @@ Constraints:
 * keep file scope minimal
 * preserve auditability and idempotency
 * stop on unclear architecture/product decisions
+* docs/process-only changes do not broadly skip reviewer; tester may be skipped only when there is no executable behavior to validate and the reason is explicit
 
 If no explicit task is given:
 

@@ -25,4 +25,10 @@ Testing focus:
 - verify audit/events are correct and consistent
 - cover edge cases and failure paths, not only happy path
 - challenge the implementation, not just confirm it works
+
+Validation decision:
+- decide first whether validation or tests are needed
+- skip executable tests for process-compliance-only changes
+- do not add new tests for docs-only or behavior-preserving changes
+- prefer existing validation when it is sufficient
 """
