@@ -69,8 +69,9 @@ Recommend **routing to tester** when:
 - workflow, state, auditability, idempotency, or operator-facing behavior is affected
 - reviewer approval exists and targeted regression validation is still useful
 
-Do not require tester for documentation-only changes.
-Do not require tester for behavior-preserving changes.
+Outside standard learning flow, do not require tester for documentation-only, formatting-only, or wording-only changes.
+Inside standard learning flow, tester handoff remains required after reviewer approval; tester may record executable validation as skipped with an explicit reason for docs/process-only changes.
+Outside standard learning flow, do not require tester for behavior-preserving changes.
 Do not add tests only for process compliance.
 Use `docs/agent-workflow/DONE_CONTRACT.md` to record validation performed or skipped checks.
 

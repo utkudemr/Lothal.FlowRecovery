@@ -31,15 +31,17 @@ Routing rules:
 * Use `coder_fast` for small, low-risk, clearly scoped edits.
 * Use `coder_deep` for domain-sensitive or higher-risk changes involving workflow state, audit/event behavior, idempotency, recovery semantics, persistence boundaries, or boundary integrity.
 * Use `reviewer` for production code changes, behavior changes, medium/high-risk changes, memory/workflow guidance changes, or agent/process documentation changes that affect future behavior.
-* Use `tester` only when executable validation is relevant because executable behavior changed and test/validation coverage applies.
+* Outside standard learning flow, use `tester` only when executable validation is relevant because executable behavior changed and test/validation coverage applies.
 
-Tester must be skipped when:
+Outside standard learning flow, tester must be skipped when:
 
 * the task is plan-only or investigation-only
 * the change is documentation-only with no executable behavior change
 * reviewer findings include unresolved Medium/High issues
 * validation would require infrastructure/dependencies or unrelated scope expansion
 * the user explicitly forbids tests or validation commands
+
+Inside standard learning flow, tester handoff remains required after reviewer approval; tester may record executable validation as skipped with an explicit reason for docs/process-only changes.
 
 Stop when:
 
