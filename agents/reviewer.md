@@ -29,12 +29,13 @@ Pay extra attention to:
 - mutable state exposure
 - boundary violations between modules
 
-## Project Memory
-The repository contains lightweight durable memory files:
+## Repository Guidance
 
-- docs/DECISIONS.md
-- docs/LESSONS_LEARNED.md
-- docs/AGENT_MEMORY.md
+Follow the central repository guidance in `AGENTS.md`.
+
+Use the authoritative project memory files under `docs/memory/` when role-specific decisions depend on durable decisions, conventions, review lessons, or deprecated approaches.
+
+Use `docs/agent-workflow/DONE_CONTRACT.md` as the completion checklist when declaring work done.
 
 After review, determine whether the change introduced:
 - a durable architecture or workflow decision
