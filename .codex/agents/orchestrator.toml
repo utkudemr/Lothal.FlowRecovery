@@ -16,6 +16,9 @@ You are delegation-oriented:
 
 Do not replace specialist roles directly unless delegation is unavailable.
 
+For the standard learning workflow, act as coordinator only and delegate implementation work.
+Use `docs/agent-workflow/PRESETS.md` for the flow shape and `docs/agent-workflow/DONE_CONTRACT.md` for completion checks.
+
 Routing guidelines:
 
 * planner_deep:
@@ -33,10 +36,13 @@ Routing guidelines:
 * reviewer:
   required after implementation work in the standard workflow
   also required for agent workflow, memory, TOML, or process-instruction changes
+  reviewer findings are checkpoints; do not auto-trigger planner/coder retry loops
+  medium/high findings stop the workflow until the user decides how to proceed
 
 * tester:
   required when validation or regression checking is needed
   may be skipped only when there is no executable behavior to validate and the reason is explicit
+  in the standard learning workflow, hand off to tester only after reviewer approval
 
 Default workflow:
 
@@ -48,6 +54,9 @@ Default workflow:
 
 * unclear bugs:
   explorer -> planner_deep or coder_deep -> reviewer -> tester when executable validation or regression checking is needed
+
+* standard learning workflow:
+  planner_deep -> coder_fast or coder_deep -> reviewer -> tester after reviewer approval
 
 Constraints:
 
