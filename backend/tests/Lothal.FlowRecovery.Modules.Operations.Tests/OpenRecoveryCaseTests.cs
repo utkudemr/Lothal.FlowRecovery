@@ -18,9 +18,10 @@ public class OpenRecoveryCaseTests
         // Create a session
         var sessionResult = sessionModule.StartSession(new StartSessionCommand("flow-test-" + sessionId, "user-001"));
         var actualSessionId = sessionResult.SessionId!.Value;
+        var staleBeforeUtc = DateTime.UtcNow.AddSeconds(1);
 
         // Act
-        var recoveryCase = operationsModule.OpenRecoveryCase(actualSessionId, operatorId, reason);
+        var recoveryCase = operationsModule.OpenRecoveryCase(actualSessionId, staleBeforeUtc, operatorId, reason);
 
         // Assert
         Assert.NotEqual(Guid.Empty, recoveryCase.Id);
@@ -42,14 +43,19 @@ public class OpenRecoveryCaseTests
         // Create a session
         var sessionResult = sessionModule.StartSession(new StartSessionCommand("flow-idempotent-" + Guid.NewGuid(), "user-001"));
         var sessionId = sessionResult.SessionId!.Value;
+        var staleBeforeUtc = DateTime.UtcNow.AddSeconds(1);
 
         // Act - Open case twice
-        var firstCase = operationsModule.OpenRecoveryCase(sessionId, operatorId, reason);
-        var secondCase = operationsModule.OpenRecoveryCase(sessionId, "operator-002", "Different reason");
+        var firstCase = operationsModule.OpenRecoveryCase(sessionId, staleBeforeUtc, operatorId, reason);
+        var secondCase = operationsModule.OpenRecoveryCase(sessionId, staleBeforeUtc, "operator-002", "Different reason");
 
         // Assert - Same case should be returned both times
         Assert.Equal(firstCase.Id, secondCase.Id);
-        Assert.Single(firstCase.Events); // No new events added on second call
+        Assert.Equal(2, firstCase.Events.Count);
+        var duplicateEvent = Assert.IsType<RecoveryActionRecorded>(firstCase.Events[1]);
+        Assert.Equal("OpenRecoveryCaseDuplicate", duplicateEvent.ActionName);
+        Assert.Equal("operator-002", duplicateEvent.OperatorId);
+        Assert.Equal("Different reason", duplicateEvent.Reason);
     }
 
     [Theory]
@@ -71,11 +77,64 @@ public class OpenRecoveryCaseTests
 
         // Act
         var exception = Assert.Throws<ArgumentException>(
-            () => operationsModule.OpenRecoveryCase(sessionId, operatorId!, reason!));
+            () => operationsModule.OpenRecoveryCase(sessionId, DateTime.UtcNow, operatorId!, reason!));
 
         // Assert
         Assert.Equal(expectedParamName, exception.ParamName);
         Assert.Contains(expectedMessage, exception.Message);
+    }
+
+    [Fact]
+    public void OpenRecoveryCase_RejectsMissingSession()
+    {
+        // Arrange
+        var sessionModule = new SessionModule();
+        var operationsModule = new OperationsModule(sessionModule);
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => operationsModule.OpenRecoveryCase(Guid.NewGuid(), DateTime.UtcNow, "operator-001", "Stale session detected"));
+
+        // Assert
+        Assert.Equal("Session not found.", exception.Message);
+    }
+
+    [Fact]
+    public void OpenRecoveryCase_RejectsNonStaleActiveSession()
+    {
+        // Arrange
+        var sessionModule = new SessionModule();
+        var operationsModule = new OperationsModule(sessionModule);
+        var sessionResult = sessionModule.StartSession(new StartSessionCommand("flow-not-stale-" + Guid.NewGuid(), "user-001"));
+        var sessionId = sessionResult.SessionId!.Value;
+        var staleBeforeUtc = DateTime.UtcNow.AddSeconds(-1);
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => operationsModule.OpenRecoveryCase(sessionId, staleBeforeUtc, "operator-001", "Stale session detected"));
+
+        // Assert
+        Assert.Equal("Recovery case can only be opened for a stale active session.", exception.Message);
+        Assert.Null(operationsModule.GetRecoveryCaseBySessionId(sessionId));
+    }
+
+    [Fact]
+    public void OpenRecoveryCase_RejectsEndedSession()
+    {
+        // Arrange
+        var sessionModule = new SessionModule();
+        var operationsModule = new OperationsModule(sessionModule);
+        var sessionResult = sessionModule.StartSession(new StartSessionCommand("flow-ended-" + Guid.NewGuid(), "user-001"));
+        var sessionId = sessionResult.SessionId!.Value;
+        sessionModule.EndSession(new EndSessionCommand(sessionId, "operator-001", "Operator", "Completed"));
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => operationsModule.OpenRecoveryCase(sessionId, DateTime.UtcNow.AddSeconds(1), "operator-001", "Stale session detected"));
+
+        // Assert
+        Assert.Equal("Recovery case can only be opened for an active session.", exception.Message);
+        Assert.Null(operationsModule.GetRecoveryCaseBySessionId(sessionId));
     }
 
     [Fact]
@@ -88,7 +147,7 @@ public class OpenRecoveryCaseTests
         // Create a session and recovery case
         var sessionResult = sessionModule.StartSession(new StartSessionCommand("flow-retrieve-" + Guid.NewGuid(), "user-001"));
         var sessionId = sessionResult.SessionId!.Value;
-        var recoveryCase = operationsModule.OpenRecoveryCase(sessionId, "operator-001", "Initial");
+        var recoveryCase = operationsModule.OpenRecoveryCase(sessionId, DateTime.UtcNow.AddSeconds(1), "operator-001", "Initial");
 
         // Act
         var retrieved = operationsModule.GetRecoveryCase(recoveryCase.Id);
@@ -109,7 +168,7 @@ public class OpenRecoveryCaseTests
         // Create a session and recovery case
         var sessionResult = sessionModule.StartSession(new StartSessionCommand("flow-by-session-" + Guid.NewGuid(), "user-001"));
         var sessionId = sessionResult.SessionId!.Value;
-        var recoveryCase = operationsModule.OpenRecoveryCase(sessionId, "operator-001", "Initial");
+        var recoveryCase = operationsModule.OpenRecoveryCase(sessionId, DateTime.UtcNow.AddSeconds(1), "operator-001", "Initial");
 
         // Act
         var retrieved = operationsModule.GetRecoveryCaseBySessionId(sessionId);

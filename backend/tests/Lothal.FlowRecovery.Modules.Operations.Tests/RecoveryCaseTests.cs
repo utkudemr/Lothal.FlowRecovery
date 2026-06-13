@@ -80,6 +80,40 @@ public class RecoveryCaseTests
     }
 
     [Fact]
+    public void ChangeStatus_RejectsInvalidTransition()
+    {
+        // Arrange
+        var recoveryCase = new RecoveryCase(Guid.NewGuid(), Guid.NewGuid(), "op-001", "Initial");
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => recoveryCase.ChangeStatus(RecoveryCaseStatus.Resolved, "op-002", "Cannot resolve before work starts"));
+
+        // Assert
+        Assert.Equal("Recovery case cannot transition from New to Resolved.", exception.Message);
+        Assert.Equal(RecoveryCaseStatus.New, recoveryCase.Status);
+        Assert.Single(recoveryCase.Events);
+    }
+
+    [Fact]
+    public void ChangeStatus_RejectsTransitionFromTerminalStatus()
+    {
+        // Arrange
+        var recoveryCase = new RecoveryCase(Guid.NewGuid(), Guid.NewGuid(), "op-001", "Initial");
+        recoveryCase.ChangeStatus(RecoveryCaseStatus.InProgress, "op-002", "Starting recovery");
+        recoveryCase.ChangeStatus(RecoveryCaseStatus.Resolved, "op-002", "Recovery complete");
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => recoveryCase.ChangeStatus(RecoveryCaseStatus.InProgress, "op-003", "Reopen"));
+
+        // Assert
+        Assert.Equal("Recovery case cannot transition from Resolved to InProgress.", exception.Message);
+        Assert.Equal(RecoveryCaseStatus.Resolved, recoveryCase.Status);
+        Assert.Equal(3, recoveryCase.Events.Count);
+    }
+
+    [Fact]
     public void RecordAction_EmitsActionRecordedEvent()
     {
         // Arrange
@@ -98,6 +132,23 @@ public class RecoveryCaseTests
         Assert.Equal(actionName, actionEvent.ActionName);
         Assert.Equal(operatorId, actionEvent.OperatorId);
         Assert.Equal(reason, actionEvent.Reason);
+    }
+
+    [Fact]
+    public void RecordAction_RejectsTerminalRecoveryCase()
+    {
+        // Arrange
+        var recoveryCase = new RecoveryCase(Guid.NewGuid(), Guid.NewGuid(), "op-001", "Initial");
+        recoveryCase.ChangeStatus(RecoveryCaseStatus.InProgress, "op-002", "Starting recovery");
+        recoveryCase.ChangeStatus(RecoveryCaseStatus.Resolved, "op-002", "Recovery complete");
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => recoveryCase.RecordAction("EndSession", "op-003", "Retry"));
+
+        // Assert
+        Assert.Equal("Recovery action cannot be recorded on a terminal recovery case.", exception.Message);
+        Assert.Equal(3, recoveryCase.Events.Count);
     }
 
     [Fact]

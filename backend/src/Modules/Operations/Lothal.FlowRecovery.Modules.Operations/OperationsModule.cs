@@ -37,7 +37,7 @@ public class OperationsModule
     /// Opens a recovery case for a stale session.
     /// Idempotent: opening the same session twice returns the existing case.
     /// </summary>
-    public RecoveryCase OpenRecoveryCase(Guid sessionId, string operatorId, string reason)
+    public RecoveryCase OpenRecoveryCase(Guid sessionId, DateTime staleBeforeUtc, string operatorId, string reason)
     {
         if (sessionId == Guid.Empty)
         {
@@ -54,9 +54,32 @@ public class OperationsModule
             throw new ArgumentException("Reason is required.", nameof(reason));
         }
 
+        var session = _sessionModule.GetSession(sessionId);
+        if (session == null)
+        {
+            throw new InvalidOperationException("Session not found.");
+        }
+
+        if (session.Status != "Active")
+        {
+            throw new InvalidOperationException("Recovery case can only be opened for an active session.");
+        }
+
+        if (session.LastEventAtUtc > staleBeforeUtc)
+        {
+            throw new InvalidOperationException("Recovery case can only be opened for a stale active session.");
+        }
+
         // Check if a case already exists for this session (idempotent)
         if (_recoveryStore.TryGetBySessionId(sessionId, out var existingCase))
         {
+            if (existingCase!.Status is RecoveryCaseStatus.Resolved or RecoveryCaseStatus.Abandoned)
+            {
+                throw new InvalidOperationException("Recovery case is already terminal.");
+            }
+
+            existingCase.RecordAction("OpenRecoveryCaseDuplicate", operatorId, reason);
+            _recoveryStore.Save(existingCase);
             return existingCase!;
         }
 
@@ -112,6 +135,14 @@ public class OperationsModule
             return new ManualEndSessionRecoveryResult(false, "Recovery case not found");
         }
 
+        if (recoveryCase.Status is RecoveryCaseStatus.Resolved or RecoveryCaseStatus.Abandoned)
+        {
+            return new ManualEndSessionRecoveryResult(false, "Recovery case is already terminal.");
+        }
+
+        recoveryCase.ChangeStatus(RecoveryCaseStatus.InProgress, operatorId, reason);
+        _recoveryStore.Save(recoveryCase);
+
         // End the session via Session module with operator metadata
         var endResult = _sessionModule.EndSession(new EndSessionCommand(recoveryCase.SessionId, operatorId, "Operator", reason));
         if (!endResult.Success)
@@ -121,6 +152,7 @@ public class OperationsModule
 
         // Record the action in the recovery case
         recoveryCase.RecordAction("EndSession", operatorId, reason);
+        recoveryCase.ChangeStatus(RecoveryCaseStatus.Resolved, operatorId, reason);
         _recoveryStore.Save(recoveryCase);
 
         return new ManualEndSessionRecoveryResult(true, null);

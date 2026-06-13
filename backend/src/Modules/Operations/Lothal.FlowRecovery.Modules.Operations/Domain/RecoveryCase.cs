@@ -49,8 +49,15 @@ public class RecoveryCase
 
     public void ChangeStatus(RecoveryCaseStatus newStatus, string operatorId, string reason)
     {
+        ValidateOperatorMetadata(operatorId, reason);
+
         if (Status == newStatus)
             return;
+
+        if (!CanTransitionTo(newStatus))
+        {
+            throw new InvalidOperationException($"Recovery case cannot transition from {Status} to {newStatus}.");
+        }
 
         Status = newStatus;
         var @event = new RecoveryCaseStatusChanged(Id, Status, operatorId, reason, DateTime.UtcNow);
@@ -59,8 +66,45 @@ public class RecoveryCase
 
     public void RecordAction(string actionName, string operatorId, string reason)
     {
+        ValidateOperatorMetadata(operatorId, reason);
+
+        if (string.IsNullOrWhiteSpace(actionName))
+        {
+            throw new ArgumentException("ActionName is required.", nameof(actionName));
+        }
+
+        if (Status is RecoveryCaseStatus.Resolved or RecoveryCaseStatus.Abandoned)
+        {
+            throw new InvalidOperationException("Recovery action cannot be recorded on a terminal recovery case.");
+        }
+
         var @event = new RecoveryActionRecorded(Id, actionName, operatorId, reason, DateTime.UtcNow);
         _events.Add(@event);
+    }
+
+    private bool CanTransitionTo(RecoveryCaseStatus newStatus)
+    {
+        return Status switch
+        {
+            RecoveryCaseStatus.New => newStatus is RecoveryCaseStatus.InProgress or RecoveryCaseStatus.Abandoned,
+            RecoveryCaseStatus.InProgress => newStatus is RecoveryCaseStatus.Resolved or RecoveryCaseStatus.Abandoned,
+            RecoveryCaseStatus.Resolved => false,
+            RecoveryCaseStatus.Abandoned => false,
+            _ => false,
+        };
+    }
+
+    private static void ValidateOperatorMetadata(string operatorId, string reason)
+    {
+        if (string.IsNullOrWhiteSpace(operatorId))
+        {
+            throw new ArgumentException("OperatorId is required.", nameof(operatorId));
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new ArgumentException("Reason is required.", nameof(reason));
+        }
     }
 }
 
