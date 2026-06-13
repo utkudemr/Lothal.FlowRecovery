@@ -34,13 +34,13 @@ Each completed task includes a summary, validation status, and commit reference.
 **Status:** Done
 **Commits:** `3aa38ea feat: add OpenRecoveryCase operation with operator audit`, `8ddadf5 feat: add operations boundary validation`, `dd6d30e feat: enforce recovery case eligibility and lifecycle`
 **Summary:** Added recovery case creation/retrieval, required operator metadata, stale-active session eligibility, and duplicate-open audit behavior.
-**Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed during hardening; latest observed suite total was 205 passing tests.
+**Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed during hardening; latest observed suite total was 208 passing tests.
 
 ### TASK-006: Add ManualEndSessionRecovery action
 **Status:** Done
-**Commits:** `3db1188 feat: add ManualEndSessionRecovery action with audit trail`, `8ddadf5 feat: add operations boundary validation`, `dd6d30e feat: enforce recovery case eligibility and lifecycle`, `86c1825 feat: make manual end recovery idempotent and audited`
+**Commits:** `3db1188 feat: add ManualEndSessionRecovery action with audit trail`, `8ddadf5 feat: add operations boundary validation`, `dd6d30e feat: enforce recovery case eligibility and lifecycle`, `86c1825 feat: make manual end recovery idempotent and audited`, `91cf95e feat: narrow resolved recovery case audit behavior`
 **Summary:** Added manual EndSession recovery with required operator metadata, Operations audit events, lifecycle updates, and idempotent repeated-attempt auditing without duplicate SessionEnded events.
-**Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed during hardening; latest observed suite total was 205 passing tests.
+**Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed during hardening; latest observed suite total was 208 passing tests.
 
 ### TASK-007: Wire Operations module into solution and enable integration
 **Status:** Done
@@ -68,6 +68,18 @@ Each completed task includes a summary, validation status, and commit reference.
 **Summary:** Made repeated manual end recovery attempts succeed idempotently, record Operations audit, and avoid duplicate SessionEnded events.
 **Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed.
 
+### OPS-HARDENING-004: Resolved recovery case audit behavior
+**Status:** Done
+**Commit:** `91cf95e feat: narrow resolved recovery case audit behavior`
+**Summary:** Rejected normal recovery actions on resolved cases and added an explicit idempotent audit path for repeated attempts.
+**Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed.
+
+### OPS-HARDENING-005: Recovery candidate test hardening
+**Status:** Done
+**Commit:** `eab6fc9 test: harden recovery candidate assertions`
+**Summary:** Replaced broad recovery candidate assertions with deterministic include/exclude assertions for stale, non-stale, and ended sessions.
+**Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed with 208 tests.
+
 ---
 
 ## Log Format
@@ -84,7 +96,7 @@ Each completed task entry includes:
 ---
 
 ## Backlog Progress
-- Total backlog items: 9
+- Total backlog items: 10
 - Completed: 7
 - In-progress: 0
-- Todo: 2
+- Todo: 3

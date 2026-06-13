@@ -29,10 +29,12 @@
    - Records RecoveryCaseOpened, RecoveryCaseStatusChanged, and RecoveryActionRecorded events
    - Opens recovery cases only for stale active sessions
    - Requires operator id and reason for recovery case opening and manual recovery actions
+   - Enforces explicit recovery case lifecycle transitions: New -> InProgress -> Resolved or Abandoned
    - Supports duplicate-open audit behavior for existing non-terminal recovery cases
    - Provides ManualEndSessionRecovery through SessionModule.EndSession
    - Makes repeated manual EndSession recovery idempotent and audited
    - Avoids duplicate SessionEnded events on repeated manual recovery
+   - Rejects normal recovery actions on resolved or abandoned cases while allowing explicit idempotent audit records
    - Fully tested for current in-memory MVP behavior
 
 ### Modules Planned (Not Yet Implemented)
@@ -69,8 +71,7 @@
 - Operator authentication and authorization are not implemented yet
 - API layer for operator workflows is not implemented yet
 - Audit trail documentation is not formalized in `docs/AUDIT_TRAIL.md`
-- RecoveryCandidate tests still rely on broad candidate assertions and can be hardened
-- Resolved-case audit behavior permits repeated action audit records and may need a narrower domain API
+- Operations boundary error handling is mixed and tracked for normalization in `.agent/backlog.md`
 
 ### Documentation Gaps
 - No dedicated Operations module README yet
@@ -114,7 +115,7 @@ Inferred from solution structure; check Directory.Build.props for exact target f
 ## Build & Test Status
 - **Build Command:** `dotnet build` from backend/
 - **Test Command:** `dotnet test` from backend/
-- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed during Operations hardening; latest observed suite total was 205 passing tests.
+- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed during Operations hardening; latest observed suite total was 208 passing tests.
 
 ## Next Phase: MVP Completion
 See `.agent/backlog.md` for detailed task list.
