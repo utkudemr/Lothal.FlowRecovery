@@ -52,6 +52,32 @@ public class OpenRecoveryCaseTests
         Assert.Single(firstCase.Events); // No new events added on second call
     }
 
+    [Theory]
+    [InlineData("operator-001", "Stale session detected", "sessionId", "SessionId is required.")]
+    [InlineData(null, "Stale session detected", "operatorId", "OperatorId is required.")]
+    [InlineData(" ", "Stale session detected", "operatorId", "OperatorId is required.")]
+    [InlineData("operator-001", null, "reason", "Reason is required.")]
+    [InlineData("operator-001", " ", "reason", "Reason is required.")]
+    public void OpenRecoveryCase_RejectsInvalidBoundaryInputs(
+        string? operatorId,
+        string? reason,
+        string expectedParamName,
+        string expectedMessage)
+    {
+        // Arrange
+        var sessionModule = new SessionModule();
+        var operationsModule = new OperationsModule(sessionModule);
+        var sessionId = expectedParamName == "sessionId" ? Guid.Empty : Guid.NewGuid();
+
+        // Act
+        var exception = Assert.Throws<ArgumentException>(
+            () => operationsModule.OpenRecoveryCase(sessionId, operatorId!, reason!));
+
+        // Assert
+        Assert.Equal(expectedParamName, exception.ParamName);
+        Assert.Contains(expectedMessage, exception.Message);
+    }
+
     [Fact]
     public void GetRecoveryCase_RetrievesCase()
     {

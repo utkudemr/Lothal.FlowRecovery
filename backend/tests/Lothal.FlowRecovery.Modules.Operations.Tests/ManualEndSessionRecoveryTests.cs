@@ -55,6 +55,53 @@ public class ManualEndSessionRecoveryTests
     }
 
     [Fact]
+    public void ManualEndSessionRecovery_RejectsEmptyRecoveryId()
+    {
+        // Arrange
+        var sessionModule = new SessionModule();
+        var operationsModule = new OperationsModule(sessionModule);
+
+        // Act
+        var result = operationsModule.ManualEndSessionRecovery(Guid.Empty, "operator-001", "Recovery attempt");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal("RecoveryId is required.", result.Error);
+    }
+
+    [Theory]
+    [InlineData(null, "Recovery attempt", "OperatorId is required.")]
+    [InlineData(" ", "Recovery attempt", "OperatorId is required.")]
+    [InlineData("operator-001", null, "Reason is required.")]
+    [InlineData("operator-001", " ", "Reason is required.")]
+    public void ManualEndSessionRecovery_RejectsMissingOperatorMetadata(
+        string? operatorId,
+        string? reason,
+        string expectedError)
+    {
+        // Arrange
+        var sessionModule = new SessionModule();
+        var operationsModule = new OperationsModule(sessionModule);
+        var sessionResult = sessionModule.StartSession(new StartSessionCommand("flow-boundary-" + Guid.NewGuid(), "user-001"));
+        var recoveryCase = operationsModule.OpenRecoveryCase(sessionResult.SessionId!.Value, "operator-001", "Initial");
+
+        // Act
+        var result = operationsModule.ManualEndSessionRecovery(recoveryCase.Id, operatorId!, reason!);
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(expectedError, result.Error);
+
+        var session = sessionModule.GetSession(recoveryCase.SessionId);
+        Assert.NotNull(session);
+        Assert.Equal("Active", session.Status);
+
+        var updatedCase = operationsModule.GetRecoveryCase(recoveryCase.Id);
+        Assert.NotNull(updatedCase);
+        Assert.Single(updatedCase.Events);
+    }
+
+    [Fact]
     public void ManualEndSessionRecovery_FailsWhenSessionAlreadyEnded()
     {
         // Arrange

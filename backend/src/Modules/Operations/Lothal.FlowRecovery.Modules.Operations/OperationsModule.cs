@@ -39,6 +39,21 @@ public class OperationsModule
     /// </summary>
     public RecoveryCase OpenRecoveryCase(Guid sessionId, string operatorId, string reason)
     {
+        if (sessionId == Guid.Empty)
+        {
+            throw new ArgumentException("SessionId is required.", nameof(sessionId));
+        }
+
+        if (string.IsNullOrWhiteSpace(operatorId))
+        {
+            throw new ArgumentException("OperatorId is required.", nameof(operatorId));
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new ArgumentException("Reason is required.", nameof(reason));
+        }
+
         // Check if a case already exists for this session (idempotent)
         if (_recoveryStore.TryGetBySessionId(sessionId, out var existingCase))
         {
@@ -75,6 +90,21 @@ public class OperationsModule
     /// </summary>
     public ManualEndSessionRecoveryResult ManualEndSessionRecovery(Guid recoveryId, string operatorId, string reason)
     {
+        if (recoveryId == Guid.Empty)
+        {
+            return new ManualEndSessionRecoveryResult(false, "RecoveryId is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(operatorId))
+        {
+            return new ManualEndSessionRecoveryResult(false, "OperatorId is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            return new ManualEndSessionRecoveryResult(false, "Reason is required.");
+        }
+
         // Get the recovery case
         var recoveryCase = GetRecoveryCase(recoveryId);
         if (recoveryCase == null)
