@@ -1,10 +1,12 @@
 # Lothal.FlowRecovery
 
-Lothal.FlowRecovery is a backend system for recovering and managing stuck sales flows in a Flutter-based sales application.
+Lothal.FlowRecovery is an **operator-driven** backend system for recovering and managing stuck sales flows in a Flutter-based sales application.
 
 ## Project Overview
 
-The system exists to restore control when a sales flow becomes blocked, inconsistent, or abandoned. It gives operators a structured way to inspect and recover sessions while preserving an auditable history of important actions.
+The system exists to restore control when a sales flow becomes blocked, inconsistent, or abandoned. It gives operators a **structured, auditable, explicit way to inspect and recover sessions**. All recovery actions are manual and operator-initiated—the system does not autonomously repair flows.
+
+**Important:** This is not an autonomous business logic agent. Recovery actions require explicit operator intervention, operator identity, and recorded reason. Every action is logged for auditability and compliance.
 
 ## Problem Statement
 

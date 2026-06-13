@@ -9,7 +9,7 @@ Session, Workflow, and Realtime are implemented today; Workflow currently expose
 - Session: manages user sessions and current flow state
 - Basket: planned module for basket data
 - Workflow: validates workflow steps via `ValidateWorkflowInitialStep`, `ValidateWorkflowTransition`, and `ValidateWorkflowCurrentStep`
-- Operations: planned module for operator interventions
+- Operations: **coordinates operator-driven recovery workflows**; orchestrates recovery cases, audit trails, and manual recovery actions without mutating Session internals directly
 - Realtime: in-memory publish/subscribe for session notifications; supports session-scoped and flow-scoped subscriptions
 
 ## Session Model
@@ -27,9 +27,10 @@ Session, Workflow, and Realtime are implemented today; Workflow currently expose
 - NoSQL (optional later): read models and audit projections
 
 ## Design Principles
+- **operator-driven recovery**: all recovery actions require explicit operator intervention; the system does not autonomously repair flows
 - server state is the source of truth, not the mobile app
 - all important state changes must be recorded as events
-- operator interventions must be auditable
+- operator interventions must be auditable (operator id, reason, timestamp)
 - workflow history should be append-only
 - module coupling should stay minimal
 - write-side and read-side concerns should remain separable

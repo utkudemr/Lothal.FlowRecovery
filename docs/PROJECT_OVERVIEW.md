@@ -37,9 +37,12 @@ Provide an operations-driven recovery system that allows:
 - push updates to mobile clients
 
 ## Non-Goals (Initial Phase)
+- **autonomous repair of sales flows** — all recovery must be operator-initiated
+- advanced recovery logic or AI-driven decision making
+- automatic correction of cart or basket state
 - full product catalog management
 - complex payment integrations
 - distributed microservices deployment
-- persistence and distributed consistency
+- persistence and distributed consistency (in MVP phase)
 
 Current implementation is in-memory and single-process. The system starts as a modular monolith and evolves over time.
