@@ -15,8 +15,14 @@
 - The recovery candidates endpoint is now available as the first external API slice
 - The recovery candidates, open recovery case, and manual recovery endpoints are now available
 - API usage documentation is now available for the current recovery flow
-- The next stage should close out Phase 2 verification
+- Phase 2 verification is complete for the current API slice
 - Persistence, authentication, UI, and new recovery actions remain out of scope for Phase 2
+
+### Phase 2 Status
+- The thin Operations API surface is complete for the current in-memory phase
+- Final Phase 2 verification passed: `dotnet restore`, `dotnet build`, and `dotnet test`
+- Current verified test total is 221 passing tests: Session 83, Workflow 61, Realtime 26, Operations 42, API 9
+- The current API flow supports listing recovery candidates, opening recovery cases, and manual end-session recovery
 
 ### Modules Implemented
 1. **Session Module**
@@ -89,7 +95,6 @@
 - Basket module is not implemented yet
 - Persistence for sessions and recovery cases is not implemented yet
 - Operator authentication and authorization are not implemented yet
-- Phase 2 verification is still pending in `.agent/backlog.md`
 - Audit history is append-only by design but not durable until persistence exists
 
 ### Documentation Gaps
@@ -136,17 +141,16 @@ Inferred from solution structure; check Directory.Build.props for exact target f
 ## Build & Test Status
 - **Build Command:** `dotnet build` from backend/
 - **Test Command:** `dotnet test` from backend/
-- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed after the manual recovery endpoint work; latest observed suite total was 221 passing tests.
+- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed in the final Phase 2 verification pass; latest observed suite total was 221 passing tests.
 
 ## Next Phase
 See `.agent/backlog.md` for detailed task list.
 
 Current planning status:
 - Phase 1 MVP backlog is complete for the current in-memory phase
-- Phase 2 backlog is underway for the Operations API surface
+- Phase 2 backlog is complete for the Operations API surface
 
 ## Next Recommended Feature Area
-- Phase 2 closeout verification for the current API slice
 - Persistence and durability for sessions, recovery cases, and audit history after the API slice is in place
 - Authentication and authorization for operator actions in a later phase
 - UI/operator console once durable backend contracts exist

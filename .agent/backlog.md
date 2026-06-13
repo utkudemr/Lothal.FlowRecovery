@@ -326,7 +326,7 @@ Phase 2 constraints:
 ---
 
 ### TASK-016: Record Phase 2 verification
-**Status:** todo
+**Status:** done
 **Goal:** Run and record final Phase 2 verification.
 **Acceptance Criteria:**
 - `dotnet restore`, `dotnet build`, and `dotnet test` pass
@@ -347,10 +347,10 @@ Phase 2 constraints:
 
 ## Backlog Status Summary
 - **Total Items:** 16
-- **Todo:** 1
+- **Todo:** 0
 - **In-Progress:** 0
-- **Done:** 15
+- **Done:** 16
 
 ## Next Planned Stage
 - Phase 1 MVP is complete for the current in-memory Operations implementation
-- Phase 2 focuses on a thin Operations API surface
+- Phase 2 Operations API surface is complete for the current in-memory implementation
