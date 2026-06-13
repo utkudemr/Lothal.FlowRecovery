@@ -73,9 +73,32 @@ public class RecoveryCase
             throw new ArgumentException("ActionName is required.", nameof(actionName));
         }
 
-        if (Status == RecoveryCaseStatus.Abandoned)
+        if (Status is RecoveryCaseStatus.Resolved or RecoveryCaseStatus.Abandoned)
         {
             throw new InvalidOperationException("Recovery action cannot be recorded on a terminal recovery case.");
+        }
+
+        var @event = new RecoveryActionRecorded(Id, actionName, operatorId, reason, DateTime.UtcNow);
+        _events.Add(@event);
+    }
+
+    public void RecordIdempotentAudit(string actionName, string operatorId, string reason)
+    {
+        ValidateOperatorMetadata(operatorId, reason);
+
+        if (string.IsNullOrWhiteSpace(actionName))
+        {
+            throw new ArgumentException("ActionName is required.", nameof(actionName));
+        }
+
+        if (Status == RecoveryCaseStatus.Abandoned)
+        {
+            throw new InvalidOperationException("Idempotent audit cannot be recorded on an abandoned recovery case.");
+        }
+
+        if (Status == RecoveryCaseStatus.New)
+        {
+            throw new InvalidOperationException("Idempotent audit can only be recorded after recovery work has started.");
         }
 
         var @event = new RecoveryActionRecorded(Id, actionName, operatorId, reason, DateTime.UtcNow);

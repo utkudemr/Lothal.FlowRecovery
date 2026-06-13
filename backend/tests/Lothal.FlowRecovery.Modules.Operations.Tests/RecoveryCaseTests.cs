@@ -135,7 +135,7 @@ public class RecoveryCaseTests
     }
 
     [Fact]
-    public void RecordAction_AllowsResolvedRecoveryCaseAudit()
+    public void RecordAction_RejectsResolvedRecoveryCase()
     {
         // Arrange
         var recoveryCase = new RecoveryCase(Guid.NewGuid(), Guid.NewGuid(), "op-001", "Initial");
@@ -143,7 +143,24 @@ public class RecoveryCaseTests
         recoveryCase.ChangeStatus(RecoveryCaseStatus.Resolved, "op-002", "Recovery complete");
 
         // Act
-        recoveryCase.RecordAction("EndSessionAlreadyEnded", "op-003", "Retry");
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => recoveryCase.RecordAction("EndSession", "op-003", "Retry"));
+
+        // Assert
+        Assert.Equal("Recovery action cannot be recorded on a terminal recovery case.", exception.Message);
+        Assert.Equal(3, recoveryCase.Events.Count);
+    }
+
+    [Fact]
+    public void RecordIdempotentAudit_AllowsResolvedRecoveryCaseAudit()
+    {
+        // Arrange
+        var recoveryCase = new RecoveryCase(Guid.NewGuid(), Guid.NewGuid(), "op-001", "Initial");
+        recoveryCase.ChangeStatus(RecoveryCaseStatus.InProgress, "op-002", "Starting recovery");
+        recoveryCase.ChangeStatus(RecoveryCaseStatus.Resolved, "op-002", "Recovery complete");
+
+        // Act
+        recoveryCase.RecordIdempotentAudit("EndSessionAlreadyEnded", "op-003", "Retry");
 
         // Assert
         Assert.Equal(4, recoveryCase.Events.Count);
@@ -151,6 +168,37 @@ public class RecoveryCaseTests
         Assert.Equal("EndSessionAlreadyEnded", actionEvent.ActionName);
         Assert.Equal("op-003", actionEvent.OperatorId);
         Assert.Equal("Retry", actionEvent.Reason);
+    }
+
+    [Fact]
+    public void RecordIdempotentAudit_RejectsNewRecoveryCase()
+    {
+        // Arrange
+        var recoveryCase = new RecoveryCase(Guid.NewGuid(), Guid.NewGuid(), "op-001", "Initial");
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => recoveryCase.RecordIdempotentAudit("EndSessionAlreadyEnded", "op-002", "Retry"));
+
+        // Assert
+        Assert.Equal("Idempotent audit can only be recorded after recovery work has started.", exception.Message);
+        Assert.Single(recoveryCase.Events);
+    }
+
+    [Fact]
+    public void RecordIdempotentAudit_RejectsAbandonedRecoveryCase()
+    {
+        // Arrange
+        var recoveryCase = new RecoveryCase(Guid.NewGuid(), Guid.NewGuid(), "op-001", "Initial");
+        recoveryCase.ChangeStatus(RecoveryCaseStatus.Abandoned, "op-002", "No longer needed");
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => recoveryCase.RecordIdempotentAudit("EndSessionAlreadyEnded", "op-003", "Retry"));
+
+        // Assert
+        Assert.Equal("Idempotent audit cannot be recorded on an abandoned recovery case.", exception.Message);
+        Assert.Equal(2, recoveryCase.Events.Count);
     }
 
     [Fact]

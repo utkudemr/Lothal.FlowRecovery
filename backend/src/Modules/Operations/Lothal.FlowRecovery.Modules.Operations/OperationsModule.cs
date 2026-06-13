@@ -150,7 +150,7 @@ public class OperationsModule
         var endResult = _sessionModule.EndSession(new EndSessionCommand(recoveryCase.SessionId, operatorId, "Operator", reason));
         if (endResult.Outcome == EndSessionOutcome.AlreadyEnded)
         {
-            recoveryCase.RecordAction("EndSessionAlreadyEnded", operatorId, reason);
+            recoveryCase.RecordIdempotentAudit("EndSessionAlreadyEnded", operatorId, reason);
             if (recoveryCase.Status == RecoveryCaseStatus.InProgress)
             {
                 recoveryCase.ChangeStatus(RecoveryCaseStatus.Resolved, operatorId, reason);
