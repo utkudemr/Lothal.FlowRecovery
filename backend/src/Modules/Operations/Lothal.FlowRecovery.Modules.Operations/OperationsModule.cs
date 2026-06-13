@@ -1,5 +1,6 @@
 namespace Lothal.FlowRecovery.Modules.Operations;
 
+using Lothal.FlowRecovery.Modules.Operations.Domain;
 using Lothal.FlowRecovery.Modules.Session;
 
 /// <summary>
@@ -9,6 +10,7 @@ using Lothal.FlowRecovery.Modules.Session;
 public class OperationsModule
 {
     private readonly SessionModule _sessionModule;
+    private readonly InMemoryRecoveryCaseStore _recoveryStore = new();
 
     public OperationsModule(SessionModule sessionModule)
     {
@@ -29,6 +31,42 @@ public class OperationsModule
                 s.LastEventAtUtc))
             .ToList()
             .AsReadOnly();
+    }
+
+    /// <summary>
+    /// Opens a recovery case for a stale session.
+    /// Idempotent: opening the same session twice returns the existing case.
+    /// </summary>
+    public RecoveryCase OpenRecoveryCase(Guid sessionId, string operatorId, string reason)
+    {
+        // Check if a case already exists for this session (idempotent)
+        if (_recoveryStore.TryGetBySessionId(sessionId, out var existingCase))
+        {
+            return existingCase!;
+        }
+
+        // Create new recovery case
+        var recoveryCase = new RecoveryCase(Guid.NewGuid(), sessionId, operatorId, reason);
+        _recoveryStore.Save(recoveryCase);
+        return recoveryCase;
+    }
+
+    /// <summary>
+    /// Gets a recovery case by its ID.
+    /// </summary>
+    public RecoveryCase? GetRecoveryCase(Guid recoveryId)
+    {
+        _recoveryStore.TryGet(recoveryId, out var recoveryCase);
+        return recoveryCase;
+    }
+
+    /// <summary>
+    /// Gets a recovery case by session ID.
+    /// </summary>
+    public RecoveryCase? GetRecoveryCaseBySessionId(Guid sessionId)
+    {
+        _recoveryStore.TryGetBySessionId(sessionId, out var recoveryCase);
+        return recoveryCase;
     }
 }
 
