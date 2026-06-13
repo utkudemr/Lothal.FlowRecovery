@@ -90,6 +90,12 @@ Each completed task includes a summary, validation status, and commit reference.
 **Summary:** Added the manual end-session recovery endpoint, surfaced explicit success outcomes for normal and idempotent attempts, and covered invalid input plus terminal recovery behavior through API tests.
 **Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed with 221 tests total: Session 83, Workflow 61, Realtime 26, Operations 42, API 9.
 
+### TASK-015: Add API usage documentation
+**Status:** Done
+**Commit:** `docs: add operations API usage guide`
+**Summary:** Added an end-to-end Operations API guide with HTTP examples for listing recovery candidates, opening recovery cases, running manual end-session recovery, handling idempotent retries, and interpreting expected error responses.
+**Validation:** Documentation review completed; `dotnet restore`, `dotnet build`, and `dotnet test` passed with 221 tests total: Session 83, Workflow 61, Realtime 26, Operations 42, API 9.
+
 ## Additional Completed Hardening
 
 ### OPS-HARDENING-001: Operations boundary validation
@@ -139,6 +145,6 @@ Each completed task entry includes:
 
 ## Backlog Progress
 - Total backlog items: 16
-- Completed: 14
+- Completed: 15
 - In-progress: 0
-- Todo: 2
+- Todo: 1

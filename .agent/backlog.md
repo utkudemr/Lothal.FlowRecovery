@@ -303,7 +303,7 @@ Phase 2 constraints:
 ---
 
 ### TASK-015: Add API usage documentation
-**Status:** todo
+**Status:** done
 **Goal:** Document the end-to-end recovery API flow.
 **Acceptance Criteria:**
 - Documentation explains listing recovery candidates
@@ -347,9 +347,9 @@ Phase 2 constraints:
 
 ## Backlog Status Summary
 - **Total Items:** 16
-- **Todo:** 2
+- **Todo:** 1
 - **In-Progress:** 0
-- **Done:** 14
+- **Done:** 15
 
 ## Next Planned Stage
 - Phase 1 MVP is complete for the current in-memory Operations implementation

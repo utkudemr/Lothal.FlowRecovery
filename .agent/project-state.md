@@ -6,7 +6,7 @@
 - Operations MVP is accepted for the current in-memory phase
 - Phase 1 backlog is complete
 - Final validation passed: `dotnet restore`, `dotnet build`, and `dotnet test`
-- Current verified test total is 212 passing tests: Session 83, Workflow 61, Realtime 26, Operations 42
+- Current verified test total is 221 passing tests: Session 83, Workflow 61, Realtime 26, Operations 42, API 9
 - Manual Task Mode and Autonomous Backlog Mode are both usable with the current bookkeeping state
 
 ### Phase 2 Plan
@@ -14,7 +14,8 @@
 - Phase 2 is now started with Operations API contracts in place
 - The recovery candidates endpoint is now available as the first external API slice
 - The recovery candidates, open recovery case, and manual recovery endpoints are now available
-- The next stage should add API usage documentation and close out Phase 2 verification
+- API usage documentation is now available for the current recovery flow
+- The next stage should close out Phase 2 verification
 - Persistence, authentication, UI, and new recovery actions remain out of scope for Phase 2
 
 ### Modules Implemented
@@ -88,12 +89,13 @@
 - Basket module is not implemented yet
 - Persistence for sessions and recovery cases is not implemented yet
 - Operator authentication and authorization are not implemented yet
-- API usage documentation is still missing for the new recovery endpoints
+- Phase 2 verification is still pending in `.agent/backlog.md`
 - Audit history is append-only by design but not durable until persistence exists
 
 ### Documentation Gaps
 - No dedicated Operations module README yet
 - Audit trail documentation exists in `docs/AUDIT_TRAIL.md`
+- Operations API usage documentation exists in `docs/OPERATIONS_API.md`
 - Agent bookkeeping was reconciled after the Operations multi-commit batch
 
 ## Design Decisions (From decisions.md)
@@ -144,7 +146,7 @@ Current planning status:
 - Phase 2 backlog is underway for the Operations API surface
 
 ## Next Recommended Feature Area
-- Operations API usage documentation and Phase 2 closeout verification
+- Phase 2 closeout verification for the current API slice
 - Persistence and durability for sessions, recovery cases, and audit history after the API slice is in place
 - Authentication and authorization for operator actions in a later phase
 - UI/operator console once durable backend contracts exist
