@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\..\Modules\Operations\Lothal.FlowRecovery.Modules.Operations\Lothal.FlowRecovery.Modules.Operations.csproj" />
+    <ProjectReference Include="..\..\Modules\Session\Lothal.FlowRecovery.Modules.Session\Lothal.FlowRecovery.Modules.Session.csproj" />
+  </ItemGroup>
+</Project>

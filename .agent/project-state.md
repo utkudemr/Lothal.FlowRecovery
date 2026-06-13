@@ -12,7 +12,8 @@
 ### Phase 2 Plan
 - Phase 2 is planned and focuses on a thin Operations API surface
 - Phase 2 is now started with Operations API contracts in place
-- The next stage should add recovery endpoints and usage documentation on top of those contracts
+- The recovery candidates endpoint is now available as the first external API slice
+- The next stage should add recovery case write endpoints and usage documentation on top of those contracts
 - Persistence, authentication, UI, and new recovery actions remain out of scope for Phase 2
 
 ### Modules Implemented
@@ -51,6 +52,7 @@
    - Rejects normal recovery actions on resolved or abandoned cases while allowing explicit idempotent audit records
    - Documents the current audit trail contract in `docs/AUDIT_TRAIL.md`
    - Provides API-safe request and response contracts for planned external recovery access
+   - Is exposed through a thin API host for listing recovery candidates
    - Fully tested for current in-memory MVP behavior
 
 ### Modules Planned (Not Yet Implemented)
@@ -85,7 +87,7 @@
 - Basket module is not implemented yet
 - Persistence for sessions and recovery cases is not implemented yet
 - Operator authentication and authorization are not implemented yet
-- API layer for operator workflows is not implemented yet
+- API layer is only partially implemented; recovery case write endpoints are still missing
 - Audit history is append-only by design but not durable until persistence exists
 
 ### Documentation Gaps
@@ -131,7 +133,7 @@ Inferred from solution structure; check Directory.Build.props for exact target f
 ## Build & Test Status
 - **Build Command:** `dotnet build` from backend/
 - **Test Command:** `dotnet test` from backend/
-- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed after Phase 2 API contract work; latest observed suite total was 212 passing tests.
+- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed after the recovery candidates endpoint work; latest observed suite total was 214 passing tests.
 
 ## Next Phase
 See `.agent/backlog.md` for detailed task list.
@@ -141,7 +143,7 @@ Current planning status:
 - Phase 2 backlog is underway for the Operations API surface
 
 ## Next Recommended Feature Area
-- Thin Operations endpoints for operator-driven recovery workflows
+- Thin Operations write endpoints for operator-driven recovery workflows
 - Persistence and durability for sessions, recovery cases, and audit history after the API slice is in place
 - Authentication and authorization for operator actions in a later phase
 - UI/operator console once durable backend contracts exist

@@ -72,6 +72,12 @@ Each completed task includes a summary, validation status, and commit reference.
 **Summary:** Added API request/response contracts and projection helpers for recovery candidates, opening recovery cases, manual end-session recovery, and recovery case detail without exposing mutable domain objects directly.
 **Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed with 212 tests total: Session 83, Workflow 61, Realtime 26, Operations 42.
 
+### TASK-012: Expose recovery candidate endpoint
+**Status:** Done
+**Commit:** `feat: expose recovery candidates endpoint`
+**Summary:** Added a thin ASP.NET Core API host plus a read-only recovery candidates endpoint that accepts a stale cutoff or stale duration and returns candidate DTOs through the Operations contract layer.
+**Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed with 214 tests total: Session 83, Workflow 61, Realtime 26, Operations 42, API 2.
+
 ## Additional Completed Hardening
 
 ### OPS-HARDENING-001: Operations boundary validation
@@ -121,6 +127,6 @@ Each completed task entry includes:
 
 ## Backlog Progress
 - Total backlog items: 16
-- Completed: 11
+- Completed: 12
 - In-progress: 0
-- Todo: 5
+- Todo: 4

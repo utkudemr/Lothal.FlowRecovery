@@ -244,7 +244,7 @@ Phase 2 constraints:
 ---
 
 ### TASK-012: Expose recovery candidate endpoint
-**Status:** todo
+**Status:** done
 **Goal:** Add an endpoint that lists stale active sessions as recovery candidates.
 **Acceptance Criteria:**
 - Endpoint accepts a stale cutoff or stale duration in a clear way
@@ -347,9 +347,9 @@ Phase 2 constraints:
 
 ## Backlog Status Summary
 - **Total Items:** 16
-- **Todo:** 5
+- **Todo:** 4
 - **In-Progress:** 0
-- **Done:** 11
+- **Done:** 12
 
 ## Next Planned Stage
 - Phase 1 MVP is complete for the current in-memory Operations implementation
