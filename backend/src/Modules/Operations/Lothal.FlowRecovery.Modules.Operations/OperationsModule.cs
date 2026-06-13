@@ -68,7 +68,41 @@ public class OperationsModule
         _recoveryStore.TryGetBySessionId(sessionId, out var recoveryCase);
         return recoveryCase;
     }
+
+    /// <summary>
+    /// Executes a manual EndSession recovery action.
+    /// Ends the session and records the action in the recovery case audit trail.
+    /// </summary>
+    public ManualEndSessionRecoveryResult ManualEndSessionRecovery(Guid recoveryId, string operatorId, string reason)
+    {
+        // Get the recovery case
+        var recoveryCase = GetRecoveryCase(recoveryId);
+        if (recoveryCase == null)
+        {
+            return new ManualEndSessionRecoveryResult(false, "Recovery case not found");
+        }
+
+        // End the session via Session module with operator metadata
+        var endResult = _sessionModule.EndSession(new EndSessionCommand(recoveryCase.SessionId, operatorId, "Operator", reason));
+        if (!endResult.Success)
+        {
+            return new ManualEndSessionRecoveryResult(false, endResult.Error ?? "Failed to end session");
+        }
+
+        // Record the action in the recovery case
+        recoveryCase.RecordAction("EndSession", operatorId, reason);
+        _recoveryStore.Save(recoveryCase);
+
+        return new ManualEndSessionRecoveryResult(true, null);
+    }
 }
+
+/// <summary>
+/// Result of a manual EndSession recovery action.
+/// </summary>
+public sealed record ManualEndSessionRecoveryResult(
+    bool Success,
+    string? Error);
 
 /// <summary>
 /// Represents a session that is a candidate for operator-driven recovery.
