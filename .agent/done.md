@@ -84,6 +84,12 @@ Each completed task includes a summary, validation status, and commit reference.
 **Summary:** Added the recovery case open endpoint, mapped expected failures to clear API responses, and preserved explicit duplicate-open behavior through API-safe recovery case detail contracts.
 **Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed with 217 tests total: Session 83, Workflow 61, Realtime 26, Operations 42, API 5.
 
+### TASK-014: Expose manual end session recovery endpoint
+**Status:** Done
+**Commit:** `feat: expose manual end session recovery endpoint`
+**Summary:** Added the manual end-session recovery endpoint, surfaced explicit success outcomes for normal and idempotent attempts, and covered invalid input plus terminal recovery behavior through API tests.
+**Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed with 221 tests total: Session 83, Workflow 61, Realtime 26, Operations 42, API 9.
+
 ## Additional Completed Hardening
 
 ### OPS-HARDENING-001: Operations boundary validation
@@ -133,6 +139,6 @@ Each completed task entry includes:
 
 ## Backlog Progress
 - Total backlog items: 16
-- Completed: 13
+- Completed: 14
 - In-progress: 0
-- Todo: 3
+- Todo: 2

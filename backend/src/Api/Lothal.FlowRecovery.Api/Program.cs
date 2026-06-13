@@ -53,6 +53,21 @@ app.MapPost(
             : Results.BadRequest(response);
     });
 
+app.MapPost(
+    "/operations/recovery-cases/manual-end-session",
+    (ManualEndSessionRecoveryRequest request, OperationsModule operationsModule) =>
+    {
+        var result = operationsModule.ManualEndSessionRecovery(
+            request.RecoveryCaseId,
+            request.OperatorId,
+            request.Reason);
+
+        var response = result.ToResponse();
+        return result.Success
+            ? Results.Ok(response)
+            : Results.BadRequest(response);
+    });
+
 app.Run();
 
 return;

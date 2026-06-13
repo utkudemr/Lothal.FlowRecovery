@@ -283,7 +283,7 @@ Phase 2 constraints:
 ---
 
 ### TASK-014: Expose manual end session recovery endpoint
-**Status:** todo
+**Status:** done
 **Goal:** Add an endpoint for operator-driven `ManualEndSessionRecovery`.
 **Acceptance Criteria:**
 - Endpoint accepts `recoveryCaseId`, `operatorId`, and `reason`
@@ -347,9 +347,9 @@ Phase 2 constraints:
 
 ## Backlog Status Summary
 - **Total Items:** 16
-- **Todo:** 3
+- **Todo:** 2
 - **In-Progress:** 0
-- **Done:** 13
+- **Done:** 14
 
 ## Next Planned Stage
 - Phase 1 MVP is complete for the current in-memory Operations implementation

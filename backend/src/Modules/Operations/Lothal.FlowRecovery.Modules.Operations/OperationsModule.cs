@@ -157,7 +157,7 @@ public class OperationsModule
             }
 
             _recoveryStore.Save(recoveryCase);
-            return new ManualEndSessionRecoveryResult(true, null);
+            return new ManualEndSessionRecoveryResult(true, null, ManualEndSessionRecoveryOutcome.AlreadyEnded);
         }
 
         if (!endResult.Success)
@@ -174,8 +174,17 @@ public class OperationsModule
 
         _recoveryStore.Save(recoveryCase);
 
-        return new ManualEndSessionRecoveryResult(true, null);
+        return new ManualEndSessionRecoveryResult(true, null, ManualEndSessionRecoveryOutcome.SessionEnded);
     }
+}
+
+/// <summary>
+/// Outcome of a manual EndSession recovery action.
+/// </summary>
+public enum ManualEndSessionRecoveryOutcome
+{
+    SessionEnded,
+    AlreadyEnded
 }
 
 /// <summary>
@@ -183,7 +192,8 @@ public class OperationsModule
 /// </summary>
 public sealed record ManualEndSessionRecoveryResult(
     bool Success,
-    string? Error);
+    string? Error,
+    ManualEndSessionRecoveryOutcome? Outcome = null);
 
 /// <summary>
 /// Result of opening a recovery case.

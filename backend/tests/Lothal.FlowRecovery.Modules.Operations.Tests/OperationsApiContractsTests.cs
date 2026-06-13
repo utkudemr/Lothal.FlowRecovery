@@ -70,7 +70,9 @@ public class OperationsApiContractsTests
 
         Assert.True(successResponse.Success);
         Assert.Null(successResponse.Error);
+        Assert.Null(successResponse.Outcome);
         Assert.False(failureResponse.Success);
         Assert.Equal("Recovery case not found", failureResponse.Error);
+        Assert.Null(failureResponse.Outcome);
     }
 }

@@ -56,7 +56,8 @@ public sealed record ManualEndSessionRecoveryRequest(
 /// </summary>
 public sealed record ManualEndSessionRecoveryResponse(
     bool Success,
-    string? Error);
+    string? Error,
+    string? Outcome);
 
 /// <summary>
 /// Request contract for retrieving a recovery case detail projection.
@@ -114,7 +115,8 @@ public static class OperationsApiContractMapper
     {
         return new ManualEndSessionRecoveryResponse(
             result.Success,
-            result.Error);
+            result.Error,
+            result.Outcome?.ToString());
     }
 
     public static RecoveryCaseDetailResponse ToResponse(this RecoveryCase recoveryCase)
