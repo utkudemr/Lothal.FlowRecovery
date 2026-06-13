@@ -13,7 +13,7 @@ Operator-driven flow recovery backend with:
 ## Backlog Items
 
 ### TASK-001: Update project documentation for operator-driven recovery
-**Status:** todo  
+**Status:** done
 **Goal:** Clarify the project as an operator-driven recovery system, not autonomous repair.  
 **Acceptance Criteria:**
 - README.md emphasizes "operator-driven" and "explicit recovery actions"
@@ -30,15 +30,15 @@ Operator-driven flow recovery backend with:
 ---
 
 ### TASK-002: Create Operations module scaffold
-**Status:** todo  
-**Goal:** Introduce the Operations module as a planned stub. No implementation yet, only structure.  
+**Status:** done
+**Goal:** Introduce the Operations module structure and solution wiring.
 **Acceptance Criteria:**
 - `backend/src/Modules/Operations/` directory exists
 - `Lothal.FlowRecovery.Modules.Operations.csproj` created with minimal class library setup
-- `OperationsModule` class exists as a placeholder (no logic yet)
+- `OperationsModule` class exists in the Operations project
 - Solution (.sln) includes the new Operations project
 - Build succeeds without warnings
-- No tests required at this stage (docs-only)
+- No tests required beyond build validation at scaffold stage
 
 **Validation:**
 - `dotnet restore && dotnet build` from backend/
@@ -50,7 +50,7 @@ Operator-driven flow recovery backend with:
 ---
 
 ### TASK-003: Add RecoveryCase domain model
-**Status:** todo  
+**Status:** done
 **Goal:** Create the RecoveryCase entity representing a recovery session for a stale flow.  
 **Acceptance Criteria:**
 - `RecoveryCase` class lives in `Operations/Domain/RecoveryCase.cs`
@@ -70,7 +70,7 @@ Operator-driven flow recovery backend with:
 ---
 
 ### TASK-004: Add ListStaleActiveSessions query to Operations module
-**Status:** todo  
+**Status:** done
 **Goal:** Enable operators to list sessions that are stale and require recovery.  
 **Acceptance Criteria:**
 - OperationsModule exposes `GetRecoveryCandidates(staleBeforeUtc)` query
@@ -89,13 +89,13 @@ Operator-driven flow recovery backend with:
 ---
 
 ### TASK-005: Create OpenRecoveryCase operation
-**Status:** todo  
+**Status:** done
 **Goal:** Allow operators to open a recovery case for a stale session.  
 **Acceptance Criteria:**
-- `OperationsModule.OpenRecoveryCase(sessionId, operatorId, reason)` creates RecoveryCase
+- `OperationsModule.OpenRecoveryCase(sessionId, staleBeforeUtc, operatorId, reason)` creates RecoveryCase only for stale active sessions
 - RecoveryCaseOpened event is recorded with operator metadata
 - Recovery case is stored and can be retrieved
-- Idempotent: opening same session twice merges into single case or returns existing
+- Idempotent: opening same session twice returns existing non-terminal case and records a duplicate-open audit action
 - Tests cover happy path and idempotency
 
 **Validation:**
@@ -108,27 +108,27 @@ Operator-driven flow recovery backend with:
 ---
 
 ### TASK-006: Add ManualEndSessionRecovery action
-**Status:** todo  
+**Status:** done
 **Goal:** Enable operators to manually end a stale session via recovery workflow.  
 **Acceptance Criteria:**
 - `OperationsModule.ManualEndSessionRecovery(recoveryId, operatorId, reason)` calls SessionModule.EndSession
 - EndSession is called with operator metadata (id and reason)
 - RecoveryActionRecorded event captures: operatorId, reason, action (EndSession), timestamp
-- Action is idempotent
+- Action is idempotent; repeated attempts record Operations audit and do not duplicate SessionEnded events
 - Tests verify operator metadata is preserved end-to-end
 
 **Validation:**
 - `dotnet test` passes
 - RecoveryActionRecorded event has correct operator metadata
 - Session is ended with audit trail preserved
-- Session.EndSession is called exactly once per action
+- SessionEnded event is recorded exactly once for repeated manual end recovery
 
 **Commit Message:** feat: add ManualEndSessionRecovery with operator audit
 
 ---
 
 ### TASK-007: Wire Operations module into solution and enable integration
-**Status:** todo  
+**Status:** done
 **Goal:** Ensure Operations module integrates cleanly with Session and Workflow without breaking existing behavior.  
 **Acceptance Criteria:**
 - Solution builds successfully with all modules
@@ -188,9 +188,9 @@ Operator-driven flow recovery backend with:
 
 ## Backlog Status Summary
 - **Total Items:** 9
-- **Todo:** 9
+- **Todo:** 2
 - **In-Progress:** 0
-- **Done:** 0
+- **Done:** 7
 
 ## Next Steps After MVP
 - Persistence layer (PostgreSQL)

@@ -96,6 +96,15 @@ Decisions are categorized by domain and include rationale.
 
 **Status:** Accepted for MVP
 
+### Decision: Reconcile Agent Bookkeeping After Multi-Commit Batches
+**Proposed:** Agent bookkeeping files must be reconciled after autonomous or multi-commit batches.
+**Rationale:**
+- Backlog, done log, and project-state files guide future agent planning
+- Stale bookkeeping can cause agents to repeat completed Operations work
+- Manual and autonomous workflows should keep repository state and workflow state aligned
+
+**Status:** Accepted
+
 ## Future Decisions (Not Yet Implemented)
 
 ### To Be Decided

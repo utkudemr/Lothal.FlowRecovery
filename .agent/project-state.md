@@ -3,32 +3,44 @@
 ## Current Implementation Status
 
 ### Modules Implemented
-1. **Session Module** ✓
+1. **Session Module**
    - Commands: StartSession, GetSession, EndSession, SetCurrentStep
    - Queries: GetActiveSessionByFlowId, ListActiveSessions, ListStaleActiveSessions
    - Event-sourced with append-only history
    - In-memory store
    - Fully tested
 
-2. **Workflow Module** ✓
+2. **Workflow Module**
    - Validates workflow steps and transitions
    - InMemoryWorkflowDefinitionProvider for testing
    - Supports ValidateWorkflowInitialStep, ValidateWorkflowTransition, ValidateWorkflowCurrentStep
    - Fully tested
 
-3. **Realtime Module** ✓
+3. **Realtime Module**
    - In-memory pub/sub for session notifications
    - Session-scoped and flow-scoped subscriptions
    - Emits notifications for: SessionStartedEvent, SessionCurrentStepSetEvent, SessionEndedEvent
    - Fully tested
 
+4. **Operations Module**
+   - Coordinates operator-driven recovery workflows
+   - Exposes stale active sessions as recovery candidates
+   - Provides RecoveryCase domain model with New, InProgress, Resolved, and Abandoned statuses
+   - Records RecoveryCaseOpened, RecoveryCaseStatusChanged, and RecoveryActionRecorded events
+   - Opens recovery cases only for stale active sessions
+   - Requires operator id and reason for recovery case opening and manual recovery actions
+   - Supports duplicate-open audit behavior for existing non-terminal recovery cases
+   - Provides ManualEndSessionRecovery through SessionModule.EndSession
+   - Makes repeated manual EndSession recovery idempotent and audited
+   - Avoids duplicate SessionEnded events on repeated manual recovery
+   - Fully tested for current in-memory MVP behavior
+
 ### Modules Planned (Not Yet Implemented)
 - **Basket Module** - not started
-- **Operations Module** - planned structure; not implemented yet
 
 ### Infrastructure
 - Solution: `backend/Lothal.FlowRecovery.sln`
-- Test framework: xUnit (inferred from test projects)
+- Test framework: xUnit
 - Build: `dotnet build` from backend/ directory
 - Test: `dotnet test` from backend/ directory
 
@@ -49,18 +61,21 @@
 - **No NATS** - no inter-service messaging yet
 - **No API layer** - no HTTP/gRPC exposure yet
 - **No UI** - backend-only development
+- **No authentication/authorization** - operator identity is passed as metadata only
 
 ### Known Issues or Gaps
-- RecoveryCase domain model does not exist yet
-- Operations module is not structured yet
-- Recovery actions are not coordinated yet
-- Audit trail for recovery operations is not formalized
-- No integration between Operations and Session for recovery workflows
+- Basket module is not implemented yet
+- Persistence for sessions and recovery cases is not implemented yet
+- Operator authentication and authorization are not implemented yet
+- API layer for operator workflows is not implemented yet
+- Audit trail documentation is not formalized in `docs/AUDIT_TRAIL.md`
+- RecoveryCandidate tests still rely on broad candidate assertions and can be hardened
+- Resolved-case audit behavior permits repeated action audit records and may need a narrower domain API
 
 ### Documentation Gaps
-- README does not explicitly state "operator-driven" (should be emphasized)
 - No dedicated Operations module README yet
-- No audit trail design document
+- No audit trail design document yet
+- Agent bookkeeping was reconciled after the Operations multi-commit batch
 
 ## Design Decisions (From decisions.md)
 - Server state is the source of truth
@@ -70,6 +85,7 @@
 - EndSession is idempotent; repeating it records SessionEndAlreadyEndedAudit
 - Current runtime is in-memory and single-process
 - Architecture style is modular monolith with microservice-ready boundaries
+- Agent bookkeeping files must be reconciled after autonomous or multi-commit batches
 
 ## Repository Structure
 ```
@@ -82,10 +98,13 @@ backend/
         Lothal.FlowRecovery.Modules.Workflow/
       Realtime/
         Lothal.FlowRecovery.Modules.Realtime/
+      Operations/
+        Lothal.FlowRecovery.Modules.Operations/
   tests/
     Lothal.FlowRecovery.Modules.Session.Tests/
     Lothal.FlowRecovery.Modules.Workflow.Tests/
     Lothal.FlowRecovery.Modules.Realtime.Tests/
+    Lothal.FlowRecovery.Modules.Operations.Tests/
   Lothal.FlowRecovery.sln
 ```
 
@@ -95,17 +114,11 @@ Inferred from solution structure; check Directory.Build.props for exact target f
 ## Build & Test Status
 - **Build Command:** `dotnet build` from backend/
 - **Test Command:** `dotnet test` from backend/
-- **Last Build Status:** Not recorded (to be verified during backlog execution)
+- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed during Operations hardening; latest observed suite total was 205 passing tests.
 
 ## Next Phase: MVP Completion
 See `.agent/backlog.md` for detailed task list.
 
-The MVP will:
-1. Clarify operator-driven design in documentation
-2. Introduce Operations module scaffold
-3. Add RecoveryCase domain model
-4. Enable stale session queries
-5. Support opening recovery cases
-6. Provide manual EndSession recovery action
-7. Record audit trails with operator metadata
-8. Ensure all builds and tests pass cleanly
+Remaining MVP work:
+1. Document the recovery audit trail in `docs/AUDIT_TRAIL.md`
+2. Run and record final MVP build/test verification once documentation is complete
