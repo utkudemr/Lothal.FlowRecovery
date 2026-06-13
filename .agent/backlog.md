@@ -1,6 +1,6 @@
 # Lothal.FlowRecovery - Implementation Backlog
 
-## MVP Focus
+## Phase 1 Focus
 Operator-driven flow recovery backend with:
 - Clear documentation describing operator-driven recovery design
 - Session and Workflow behavior preserved
@@ -10,7 +10,7 @@ Operator-driven flow recovery backend with:
 - Manual recovery actions with audit trails
 - Build and test validation
 
-## Backlog Items
+## Phase 1 Backlog Items
 
 ### TASK-001: Update project documentation for operator-driven recovery
 **Status:** done
@@ -205,16 +205,152 @@ Operator-driven flow recovery backend with:
 
 ---
 
+## Phase 2 Focus
+Operations API Surface
+
+The current in-memory Operations MVP needs a thin application-facing API layer so operators or external clients can exercise recovery flows without calling module code directly.
+
+Phase 2 constraints:
+- Do not add persistence yet
+- Do not add authentication or authorization yet
+- Do not add UI yet
+- Do not add new recovery actions yet
+- Keep the API thin and operator-driven
+- Do not expose mutable domain objects directly
+- Operations remains the owner of recovery coordination
+- Session remains the owner of session state
+
+## Phase 2 Backlog Items
+
+### TASK-011: Add Operations API contracts
+**Status:** todo
+**Goal:** Define request/response contracts for the recovery API without implementing endpoints yet.
+**Acceptance Criteria:**
+- Request and response DTOs exist for listing recovery candidates
+- Request and response DTOs exist for opening a recovery case
+- Request and response DTOs exist for manual end-session recovery
+- Request and response DTOs exist for getting recovery case detail if supported by the current module
+- DTOs do not expose internal domain objects directly
+- Validation expectations are documented near the contracts or related API layer
+- Build passes without changing production behavior
+
+**Validation:**
+- `dotnet restore`
+- `dotnet build`
+- `dotnet test`
+
+**Commit Message:** feat: add operations API contracts
+
+---
+
+### TASK-012: Expose recovery candidate endpoint
+**Status:** todo
+**Goal:** Add an endpoint that lists stale active sessions as recovery candidates.
+**Acceptance Criteria:**
+- Endpoint accepts a stale cutoff or stale duration in a clear way
+- Endpoint returns recovery candidate DTOs
+- Endpoint does not mutate state
+- Tests cover stale and non-stale behavior through the API or application layer
+- Build and tests pass
+
+**Validation:**
+- `dotnet restore`
+- `dotnet build`
+- `dotnet test`
+
+**Commit Message:** feat: expose recovery candidates endpoint
+
+---
+
+### TASK-013: Expose open recovery case endpoint
+**Status:** todo
+**Goal:** Add an endpoint to open a recovery case for a stale active session.
+**Acceptance Criteria:**
+- Endpoint accepts `sessionId`, `operatorId`, `reason`, and a stale cutoff or duration
+- Expected failures return clear error responses
+- Success returns recovery case information through DTOs
+- Duplicate open behavior remains explicit
+- Tests cover success and expected failures
+- Build and tests pass
+
+**Validation:**
+- `dotnet restore`
+- `dotnet build`
+- `dotnet test`
+
+**Commit Message:** feat: expose open recovery case endpoint
+
+---
+
+### TASK-014: Expose manual end session recovery endpoint
+**Status:** todo
+**Goal:** Add an endpoint for operator-driven `ManualEndSessionRecovery`.
+**Acceptance Criteria:**
+- Endpoint accepts `recoveryCaseId`, `operatorId`, and `reason`
+- Expected failures return clear error responses
+- Success returns recovery action result information
+- Repeated and idempotent attempts are represented clearly
+- Tests cover success, invalid input, and terminal/idempotent behavior
+- Build and tests pass
+
+**Validation:**
+- `dotnet restore`
+- `dotnet build`
+- `dotnet test`
+
+**Commit Message:** feat: expose manual end session recovery endpoint
+
+---
+
+### TASK-015: Add API usage documentation
+**Status:** todo
+**Goal:** Document the end-to-end recovery API flow.
+**Acceptance Criteria:**
+- Documentation explains listing recovery candidates
+- Documentation explains opening a recovery case
+- Documentation explains manual end-session recovery
+- Documentation explains repeated or idempotent recovery attempts
+- Documentation explains expected error responses
+- Includes curl or HTTP examples if the project has HTTP endpoints
+- Mentions current in-memory limitations
+- Build and tests pass
+
+**Validation:**
+- `dotnet restore`
+- `dotnet build`
+- `dotnet test`
+- Documentation review
+
+**Commit Message:** docs: add operations API usage guide
+
+---
+
+### TASK-016: Record Phase 2 verification
+**Status:** todo
+**Goal:** Run and record final Phase 2 verification.
+**Acceptance Criteria:**
+- `dotnet restore`, `dotnet build`, and `dotnet test` pass
+- Test count is recorded
+- `.agent/project-state.md` is updated with Phase 2 status
+- `.agent/done.md` is updated
+- Remaining limitations are documented
+
+**Validation:**
+- `dotnet restore`
+- `dotnet build`
+- `dotnet test`
+- Documentation review
+
+**Commit Message:** chore: record phase 2 verification
+
+---
+
 ## Backlog Status Summary
-- **Total Items:** 10
-- **Todo:** 0
+- **Total Items:** 16
+- **Todo:** 6
 - **In-Progress:** 0
 - **Done:** 10
 
-## Next Steps After MVP
-- Persistence layer (PostgreSQL)
-- Realtime integration with Operations events
-- Additional recovery actions (SetCurrentStep recovery, basket correction)
-- Operator API layer (HTTP/gRPC)
-- Distributed consistency and locks
-- Read models and audit projections
+## Next Planned Stage
+- Phase 1 MVP is complete for the current in-memory Operations implementation
+- Phase 2 focuses on a thin Operations API surface

@@ -4,9 +4,15 @@
 
 ### MVP Status
 - Operations MVP is accepted for the current in-memory phase
+- Phase 1 backlog is complete
 - Final validation passed: `dotnet restore`, `dotnet build`, and `dotnet test`
 - Current verified test total is 208 passing tests: Session 83, Workflow 61, Realtime 26, Operations 38
 - Manual Task Mode and Autonomous Backlog Mode are both usable with the current bookkeeping state
+
+### Phase 2 Plan
+- Phase 2 is planned and focuses on a thin Operations API surface
+- The next stage should add API contracts, recovery endpoints, and usage documentation
+- Persistence, authentication, UI, and new recovery actions remain out of scope for Phase 2
 
 ### Modules Implemented
 1. **Session Module**
@@ -125,14 +131,15 @@ Inferred from solution structure; check Directory.Build.props for exact target f
 - **Test Command:** `dotnet test` from backend/
 - **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed in the final MVP verification pass; latest observed suite total was 208 passing tests.
 
-## Next Phase: MVP Completion
+## Next Phase
 See `.agent/backlog.md` for detailed task list.
 
-Remaining MVP work:
-- MVP backlog is complete for the current in-memory phase
+Current planning status:
+- Phase 1 MVP backlog is complete for the current in-memory phase
+- Phase 2 backlog is planned for the Operations API surface
 
 ## Next Recommended Feature Area
-- Persistence and durability for sessions, recovery cases, and audit history
-- Operator API surface for recovery workflows
-- Authentication and authorization for operator actions
+- Thin Operations API contracts and endpoints for operator-driven recovery workflows
+- Persistence and durability for sessions, recovery cases, and audit history after the API slice is in place
+- Authentication and authorization for operator actions in a later phase
 - UI/operator console once durable backend contracts exist
