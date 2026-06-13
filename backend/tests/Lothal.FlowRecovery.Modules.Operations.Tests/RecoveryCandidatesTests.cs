@@ -1,88 +1,71 @@
 namespace Lothal.FlowRecovery.Modules.Operations.Tests;
 
 using Lothal.FlowRecovery.Modules.Session;
-using Lothal.FlowRecovery.Modules.Workflow;
-
 public class RecoveryCandidatesTests
 {
     [Fact]
-    public void GetRecoveryCandidates_ReturnsMatchingCandidates()
-    {
-        // Arrange - Use a workflow to enable SetCurrentStep
-        var workflowProvider = new InMemoryWorkflowDefinitionProvider(
-            new WorkflowDefinition(
-                "flow-test",
-                new[] { "step1", "step2", "step3" },
-                new Dictionary<string, IReadOnlyCollection<string>>
-                {
-                    ["step1"] = new[] { "step2" },
-                    ["step2"] = new[] { "step3" },
-                    ["step3"] = Array.Empty<string>(),
-                }));
-        var sessionModule = new SessionModule(workflowProvider);
-        var operationsModule = new OperationsModule(sessionModule);
-
-        // Create a session
-        var flowId = "flow-test-" + Guid.NewGuid().ToString("N");
-        var result = sessionModule.StartSession(new StartSessionCommand(flowId, "user-001"));
-        var sessionId = result.SessionId!.Value;
-
-        // Set the stale threshold to just after "now"
-        var staleBeforeUtc = DateTime.UtcNow.AddSeconds(1);
-
-        // Act
-        var candidates = operationsModule.GetRecoveryCandidates(staleBeforeUtc);
-
-        // Assert - Should have at least one candidate from the session we just created
-        Assert.NotEmpty(candidates);
-        var ourCandidate = candidates.FirstOrDefault(c => c.SessionId == sessionId);
-        Assert.NotNull(ourCandidate);
-        Assert.Equal(flowId, ourCandidate.FlowId);
-        Assert.True(ourCandidate.LastEventAtUtc <= staleBeforeUtc);
-    }
-
-    [Fact]
-    public void GetRecoveryCandidates_HandlesSessionWithoutWorkflowDefinition()
-    {
-        // Arrange - Create session module without workflow provider
-        var sessionModule = new SessionModule();
-        var operationsModule = new OperationsModule(sessionModule);
-
-        // Create a session for a flow with no workflow definition
-        var flowId = "unknown-flow-" + Guid.NewGuid().ToString("N");
-        var result = sessionModule.StartSession(new StartSessionCommand(flowId, "user-001"));
-        var sessionId = result.SessionId!.Value;
-
-        var staleBeforeUtc = DateTime.UtcNow.AddSeconds(1);
-
-        // Act
-        var candidates = operationsModule.GetRecoveryCandidates(staleBeforeUtc);
-
-        // Assert
-        var ourCandidate = candidates.FirstOrDefault(c => c.SessionId == sessionId);
-        Assert.NotNull(ourCandidate);
-        Assert.Equal("unknown", ourCandidate.CurrentStep);
-    }
-
-    [Fact]
-    public void GetRecoveryCandidates_FiltersByStaleThreshold()
+    public void GetRecoveryCandidates_IncludesExpectedStaleActiveSession()
     {
         // Arrange
         var sessionModule = new SessionModule();
         var operationsModule = new OperationsModule(sessionModule);
-
-        // Create a session
-        var flowId = "flow-future-" + Guid.NewGuid().ToString("N");
-        sessionModule.StartSession(new StartSessionCommand(flowId, "user-001"));
-
-        // Set stale threshold to the past (very old), so all active sessions are included
-        var staleBeforeUtc = DateTime.UtcNow.AddSeconds(1);
+        var flowId = "flow-stale-" + Guid.NewGuid().ToString("N");
+        var sessionId = StartSession(sessionModule, flowId);
+        var threshold = sessionModule.GetSession(sessionId)!.LastEventAtUtc;
 
         // Act
-        var candidates = operationsModule.GetRecoveryCandidates(staleBeforeUtc);
+        var candidates = operationsModule.GetRecoveryCandidates(threshold);
 
         // Assert
-        Assert.NotEmpty(candidates);
-        Assert.All(candidates, c => Assert.True(c.LastEventAtUtc <= staleBeforeUtc));
+        var candidate = Assert.Single(candidates, candidate => candidate.SessionId == sessionId);
+        Assert.Equal(flowId, candidate.FlowId);
+        Assert.Equal("unknown", candidate.CurrentStep);
+        Assert.Equal(threshold, candidate.LastEventAtUtc);
+    }
+
+    [Fact]
+    public void GetRecoveryCandidates_ExcludesNonStaleActiveSession()
+    {
+        // Arrange
+        var sessionModule = new SessionModule();
+        var operationsModule = new OperationsModule(sessionModule);
+        var staleSessionId = StartSession(sessionModule, "flow-stale-" + Guid.NewGuid().ToString("N"));
+        var threshold = sessionModule.GetSession(staleSessionId)!.LastEventAtUtc;
+
+        Assert.True(SpinWait.SpinUntil(() => DateTime.UtcNow > threshold, TimeSpan.FromSeconds(1)));
+        var nonStaleSessionId = StartSession(sessionModule, "flow-non-stale-" + Guid.NewGuid().ToString("N"));
+
+        // Act
+        var candidates = operationsModule.GetRecoveryCandidates(threshold);
+
+        // Assert
+        Assert.Contains(candidates, candidate => candidate.SessionId == staleSessionId);
+        Assert.DoesNotContain(candidates, candidate => candidate.SessionId == nonStaleSessionId);
+    }
+
+    [Fact]
+    public void GetRecoveryCandidates_ExcludesEndedSession()
+    {
+        // Arrange
+        var sessionModule = new SessionModule();
+        var operationsModule = new OperationsModule(sessionModule);
+        var endedSessionId = StartSession(sessionModule, "flow-ended-" + Guid.NewGuid().ToString("N"));
+        var threshold = sessionModule.GetSession(endedSessionId)!.LastEventAtUtc;
+        var end = sessionModule.EndSession(new EndSessionCommand(endedSessionId, "operator-001", "Operator", "No longer recoverable"));
+        Assert.True(end.Success);
+
+        // Act
+        var candidates = operationsModule.GetRecoveryCandidates(threshold);
+
+        // Assert
+        Assert.DoesNotContain(candidates, candidate => candidate.SessionId == endedSessionId);
+    }
+
+    private static Guid StartSession(SessionModule sessionModule, string flowId)
+    {
+        var result = sessionModule.StartSession(new StartSessionCommand(flowId, "user-001"));
+        Assert.True(result.Success);
+        Assert.NotNull(result.SessionId);
+        return result.SessionId.Value;
     }
 }
