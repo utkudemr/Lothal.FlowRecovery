@@ -300,6 +300,118 @@ Use `docs/agent-workflow/PRESETS.md` for reusable workflow presets.
 
 ---
 
+## Development Workflows
+
+The repository supports **two optional development workflows** in parallel:
+
+### Workflow 1: Manual Task Mode (Step-by-Step)
+
+**When to Use:**
+- You have one specific task in mind
+- You want to review and decide on the next step after each task
+- You want to maintain full control over sequencing
+
+**How to Invoke:**
+```
+Do TASK-002: Create Operations module scaffold
+
+Work on: add RecoveryCase domain model
+```
+
+**Agent Behavior:**
+1. Reads the task from `.agent/backlog.md`
+2. Inspects relevant code
+3. Implements minimal changes for the task
+4. Runs validation commands
+5. Commits the task
+6. Reports completion and **stops**
+7. Waits for your next instruction
+
+**See:** `.agent/manual-mode.md` for detailed instructions
+
+---
+
+### Workflow 2: Autonomous Backlog Mode (Development Loop)
+
+**When to Use:**
+- You want the agent to work through multiple backlog items automatically
+- The first task has been validated and the direction is clear
+- You want efficient batch progress
+
+**How to Invoke:**
+```
+Use autonomous mode to complete the backlog
+
+Switch to autonomous backlog mode
+
+Run the autonomous development loop
+```
+
+**Agent Behavior:**
+1. Reads `.agent/backlog.md`
+2. Finds first `todo` task
+3. Marks it as `in-progress`
+4. Implements and validates (same as manual mode)
+5. Marks as `done` and commits
+6. Updates state files (`.agent/done.md`, `.agent/project-state.md`, `.agent/decisions.md`)
+7. Continues to next task
+8. Stops only when all tasks are done or a stop condition occurs
+
+**Stop Conditions:**
+- Product decision required but not documented
+- Build or test failures unrelated to current task
+- Unrelated changes in working tree
+- Would need to delete or rewrite large parts of codebase
+- Would break existing manual workflow
+
+**See:** `.agent/autonomous-mode.md` for detailed instructions
+
+---
+
+## Choosing Your Workflow
+
+| Scenario | Use Workflow | Why |
+|----------|----------|------|
+| "Do TASK-001" | Manual Task Mode | Clear, focused scope |
+| "Complete the backlog" | Autonomous Mode | Efficient batch progress |
+| "I want to review after each task" | Manual Task Mode | Full control |
+| "First task is done, continue" | Autonomous Mode | Hands-off, batch efficiency |
+| "There's a stop condition, need guidance" | Manual Task Mode | Take control back |
+
+---
+
+## Backlog Planning Files
+
+The autonomous workflow uses these agent-readable files in `.agent/`:
+
+- **`.agent/backlog.md`** - Ordered list of MVP tasks with acceptance criteria and validation commands
+- **`.agent/project-state.md`** - Current implementation status, known gaps, and limitations
+- **`.agent/done.md`** - Completed task log (updated as backlog progresses)
+- **`.agent/decisions.md`** - Architecture and product decisions made during backlog execution
+- **`.agent/manual-mode.md`** - How to use step-by-step task mode
+- **`.agent/autonomous-mode.md`** - How to use automatic backlog processing mode
+
+These files support both workflows:
+- Manual mode reads them to understand the single requested task
+- Autonomous mode reads them to drive the full loop
+
+---
+
+## Integration with Existing Workflows
+
+**Important:** Both workflows respect the existing project structure and constraints:
+
+- Do not break existing test infrastructure
+- Do not modify agent roles or coordination rules (above)
+- Do not remove or rename `AGENTS.md` sections
+- Preserve module boundaries and architecture principles
+- Follow the same Change Guidelines and Audit Rules
+- Update project memory (`docs/memory/`) for durable decisions
+
+Both workflows are optional and coexist with the existing step-by-step agent-based collaboration described earlier in this document.
+
+---
+
 ## Memory Quality Rules
 
 Memory files should remain:
