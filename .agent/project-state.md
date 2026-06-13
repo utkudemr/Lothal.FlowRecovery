@@ -2,6 +2,12 @@
 
 ## Current Implementation Status
 
+### MVP Status
+- Operations MVP is accepted for the current in-memory phase
+- Final validation passed: `dotnet restore`, `dotnet build`, and `dotnet test`
+- Current verified test total is 208 passing tests: Session 83, Workflow 61, Realtime 26, Operations 38
+- Manual Task Mode and Autonomous Backlog Mode are both usable with the current bookkeeping state
+
 ### Modules Implemented
 1. **Session Module**
    - Commands: StartSession, GetSession, EndSession, SetCurrentStep
@@ -72,7 +78,7 @@
 - Persistence for sessions and recovery cases is not implemented yet
 - Operator authentication and authorization are not implemented yet
 - API layer for operator workflows is not implemented yet
-- Final MVP-wide build/test verification is still pending in `.agent/backlog.md`
+- Audit history is append-only by design but not durable until persistence exists
 
 ### Documentation Gaps
 - No dedicated Operations module README yet
@@ -117,10 +123,16 @@ Inferred from solution structure; check Directory.Build.props for exact target f
 ## Build & Test Status
 - **Build Command:** `dotnet build` from backend/
 - **Test Command:** `dotnet test` from backend/
-- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed after Operations boundary normalization; latest observed suite total was 208 passing tests.
+- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed in the final MVP verification pass; latest observed suite total was 208 passing tests.
 
 ## Next Phase: MVP Completion
 See `.agent/backlog.md` for detailed task list.
 
 Remaining MVP work:
-1. Run and record final MVP build/test verification
+- MVP backlog is complete for the current in-memory phase
+
+## Next Recommended Feature Area
+- Persistence and durability for sessions, recovery cases, and audit history
+- Operator API surface for recovery workflows
+- Authentication and authorization for operator actions
+- UI/operator console once durable backend contracts exist

@@ -167,7 +167,7 @@ Operator-driven flow recovery backend with:
 ---
 
 ### TASK-009: Verify build and test suite
-**Status:** todo  
+**Status:** done
 **Goal:** Final validation that the MVP compiles, tests pass, and builds cleanly.  
 **Acceptance Criteria:**
 - `dotnet restore` succeeds
@@ -182,7 +182,7 @@ Operator-driven flow recovery backend with:
 - Test output shows all tests passing
 - No unresolved dependencies
 
-**Commit Message:** chore: verify MVP build and test suite passing
+**Commit Message:** chore: record final MVP verification
 
 ---
 
@@ -207,9 +207,9 @@ Operator-driven flow recovery backend with:
 
 ## Backlog Status Summary
 - **Total Items:** 10
-- **Todo:** 1
+- **Todo:** 0
 - **In-Progress:** 0
-- **Done:** 9
+- **Done:** 10
 
 ## Next Steps After MVP
 - Persistence layer (PostgreSQL)

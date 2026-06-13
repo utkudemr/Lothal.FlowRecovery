@@ -60,6 +60,12 @@ Each completed task includes a summary, validation status, and commit reference.
 **Summary:** Changed `OpenRecoveryCase` to return an explicit result object for expected validation and eligibility failures while preserving duplicate-open audit behavior, lifecycle rules, and manual recovery result behavior.
 **Validation:** Documentation review completed; `dotnet restore`, `dotnet build`, and `dotnet test` passed with 208 tests.
 
+### TASK-009: Verify build and test suite
+**Status:** Done
+**Commit:** `chore: record final MVP verification`
+**Summary:** Ran the final MVP validation pass across Session, Workflow, Realtime, and Operations and recorded the verified repository state for future manual and autonomous agent work.
+**Validation:** Documentation review completed; `dotnet restore`, `dotnet build`, and `dotnet test` passed with 208 tests total: Session 83, Workflow 61, Realtime 26, Operations 38.
+
 ## Additional Completed Hardening
 
 ### OPS-HARDENING-001: Operations boundary validation
@@ -109,6 +115,6 @@ Each completed task entry includes:
 
 ## Backlog Progress
 - Total backlog items: 10
-- Completed: 9
+- Completed: 10
 - In-progress: 0
-- Todo: 1
+- Todo: 0
