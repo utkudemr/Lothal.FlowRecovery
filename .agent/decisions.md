@@ -105,6 +105,16 @@ Decisions are categorized by domain and include rationale.
 
 **Status:** Accepted
 
+### Decision: Operations Boundary Error Handling Style
+**Proposed:** For the MVP, domain invariant violations may throw exceptions inside domain objects, while Operations boundary methods should prefer explicit result objects for expected business failures.
+**Rationale:**
+- Domain objects such as RecoveryCase enforce lifecycle invariants directly and fail fast on invalid state transitions
+- Operator-facing Operations methods should make expected business failures explicit and auditable for callers
+- Current Operations boundary behavior is mixed: ManualEndSessionRecovery returns a result, while OpenRecoveryCase still throws for expected validation and eligibility failures
+- The existing inconsistency is accepted temporarily and should be normalized in a focused follow-up task
+
+**Status:** Accepted for MVP
+
 ## Future Decisions (Not Yet Implemented)
 
 ### To Be Decided

@@ -186,9 +186,28 @@ Operator-driven flow recovery backend with:
 
 ---
 
+### TASK-010: Normalize Operations boundary error handling
+**Status:** todo
+**Goal:** Make Operations boundary methods consistently return explicit result objects for expected business failures.
+**Acceptance Criteria:**
+- `OpenRecoveryCase` reports validation and eligibility failures through a result type instead of throwing expected boundary errors
+- Domain objects still throw for invariant violations and invalid lifecycle usage
+- `ManualEndSessionRecovery` result behavior remains compatible with existing tests
+- Tests cover missing input, missing session, non-stale session, ended session, and terminal recovery case outcomes
+- No Session or Workflow behavior changes
+
+**Validation:**
+- `dotnet restore`
+- `dotnet build`
+- `dotnet test`
+
+**Commit Message:** refactor: normalize operations boundary error handling
+
+---
+
 ## Backlog Status Summary
-- **Total Items:** 9
-- **Todo:** 2
+- **Total Items:** 10
+- **Todo:** 3
 - **In-Progress:** 0
 - **Done:** 7
 
