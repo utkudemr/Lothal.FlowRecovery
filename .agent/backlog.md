@@ -187,7 +187,7 @@ Operator-driven flow recovery backend with:
 ---
 
 ### TASK-010: Normalize Operations boundary error handling
-**Status:** todo
+**Status:** done
 **Goal:** Make Operations boundary methods consistently return explicit result objects for expected business failures.
 **Acceptance Criteria:**
 - `OpenRecoveryCase` reports validation and eligibility failures through a result type instead of throwing expected boundary errors
@@ -201,15 +201,15 @@ Operator-driven flow recovery backend with:
 - `dotnet build`
 - `dotnet test`
 
-**Commit Message:** refactor: normalize operations boundary error handling
+**Commit Message:** refactor: normalize operations boundary failures
 
 ---
 
 ## Backlog Status Summary
 - **Total Items:** 10
-- **Todo:** 2
+- **Todo:** 1
 - **In-Progress:** 0
-- **Done:** 8
+- **Done:** 9
 
 ## Next Steps After MVP
 - Persistence layer (PostgreSQL)

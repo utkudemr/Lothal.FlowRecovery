@@ -17,7 +17,8 @@ public class ManualEndSessionRecoveryTests
         var sessionId = sessionResult.SessionId!.Value;
 
         // Open a recovery case
-        var recoveryCase = operationsModule.OpenRecoveryCase(sessionId, DateTime.UtcNow.AddSeconds(1), "operator-001", "Initial");
+        var openResult = operationsModule.OpenRecoveryCase(sessionId, DateTime.UtcNow.AddSeconds(1), "operator-001", "Initial");
+        var recoveryCase = Assert.IsType<RecoveryCase>(openResult.RecoveryCase);
 
         // Act
         var result = operationsModule.ManualEndSessionRecovery(recoveryCase.Id, "operator-001", "Manual recovery");
@@ -88,7 +89,8 @@ public class ManualEndSessionRecoveryTests
         var sessionModule = new SessionModule();
         var operationsModule = new OperationsModule(sessionModule);
         var sessionResult = sessionModule.StartSession(new StartSessionCommand("flow-boundary-" + Guid.NewGuid(), "user-001"));
-        var recoveryCase = operationsModule.OpenRecoveryCase(sessionResult.SessionId!.Value, DateTime.UtcNow.AddSeconds(1), "operator-001", "Initial");
+        var openResult = operationsModule.OpenRecoveryCase(sessionResult.SessionId!.Value, DateTime.UtcNow.AddSeconds(1), "operator-001", "Initial");
+        var recoveryCase = Assert.IsType<RecoveryCase>(openResult.RecoveryCase);
 
         // Act
         var result = operationsModule.ManualEndSessionRecovery(recoveryCase.Id, operatorId!, reason!);
@@ -118,7 +120,8 @@ public class ManualEndSessionRecoveryTests
         var sessionId = sessionResult.SessionId!.Value;
 
         // Open recovery case while active, then simulate the session being ended before the recovery action runs.
-        var recoveryCase = operationsModule.OpenRecoveryCase(sessionId, DateTime.UtcNow.AddSeconds(1), "operator-001", "Trying to recover session");
+        var openResult = operationsModule.OpenRecoveryCase(sessionId, DateTime.UtcNow.AddSeconds(1), "operator-001", "Trying to recover session");
+        var recoveryCase = Assert.IsType<RecoveryCase>(openResult.RecoveryCase);
         sessionModule.EndSession(new EndSessionCommand(sessionId, "operator-initial", "Operator", "Initial end"));
 
         // Act
@@ -155,7 +158,8 @@ public class ManualEndSessionRecoveryTests
         var sessionId = sessionResult.SessionId!.Value;
 
         // Open a recovery case
-        var recoveryCase = operationsModule.OpenRecoveryCase(sessionId, DateTime.UtcNow.AddSeconds(1), "operator-001", "Initial");
+        var openResult = operationsModule.OpenRecoveryCase(sessionId, DateTime.UtcNow.AddSeconds(1), "operator-001", "Initial");
+        var recoveryCase = Assert.IsType<RecoveryCase>(openResult.RecoveryCase);
 
         // Act - Call twice
         var firstResult = operationsModule.ManualEndSessionRecovery(recoveryCase.Id, "operator-001", "First attempt");
@@ -198,7 +202,8 @@ public class ManualEndSessionRecoveryTests
         var sessionId = sessionResult.SessionId!.Value;
 
         // Open a recovery case
-        var recoveryCase = operationsModule.OpenRecoveryCase(sessionId, DateTime.UtcNow.AddSeconds(1), "operator-recovery", "Initial");
+        var openResult = operationsModule.OpenRecoveryCase(sessionId, DateTime.UtcNow.AddSeconds(1), "operator-recovery", "Initial");
+        var recoveryCase = Assert.IsType<RecoveryCase>(openResult.RecoveryCase);
 
         // Act
         var operatorId = "operator-manual";

@@ -110,8 +110,8 @@ Decisions are categorized by domain and include rationale.
 **Rationale:**
 - Domain objects such as RecoveryCase enforce lifecycle invariants directly and fail fast on invalid state transitions
 - Operator-facing Operations methods should make expected business failures explicit and auditable for callers
-- Current Operations boundary behavior is mixed: ManualEndSessionRecovery returns a result, while OpenRecoveryCase still throws for expected validation and eligibility failures
-- The existing inconsistency is accepted temporarily and should be normalized in a focused follow-up task
+- Operations boundary methods now use result objects for expected business failures
+- Unexpected programming or infrastructure errors should still surface rather than being swallowed
 
 **Status:** Accepted for MVP
 

@@ -54,6 +54,12 @@ Each completed task includes a summary, validation status, and commit reference.
 **Summary:** Added `docs/AUDIT_TRAIL.md`, linked it from README and architecture docs, and documented operator-driven recovery audit behavior, duplicate-open audit behavior, manual end-session recovery auditing, idempotent repeated attempts, lifecycle events, and in-memory audit limitations.
 **Validation:** Documentation review completed; `dotnet restore`, `dotnet build`, and `dotnet test` passed with 208 tests.
 
+### TASK-010: Normalize Operations boundary error handling
+**Status:** Done
+**Commit:** `refactor: normalize operations boundary failures`
+**Summary:** Changed `OpenRecoveryCase` to return an explicit result object for expected validation and eligibility failures while preserving duplicate-open audit behavior, lifecycle rules, and manual recovery result behavior.
+**Validation:** Documentation review completed; `dotnet restore`, `dotnet build`, and `dotnet test` passed with 208 tests.
+
 ## Additional Completed Hardening
 
 ### OPS-HARDENING-001: Operations boundary validation
@@ -103,6 +109,6 @@ Each completed task entry includes:
 
 ## Backlog Progress
 - Total backlog items: 10
-- Completed: 8
+- Completed: 9
 - In-progress: 0
-- Todo: 2
+- Todo: 1

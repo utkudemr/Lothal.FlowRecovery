@@ -37,37 +37,37 @@ public class OperationsModule
     /// Opens a recovery case for a stale session.
     /// Idempotent: opening the same session twice returns the existing case.
     /// </summary>
-    public RecoveryCase OpenRecoveryCase(Guid sessionId, DateTime staleBeforeUtc, string operatorId, string reason)
+    public OpenRecoveryCaseResult OpenRecoveryCase(Guid sessionId, DateTime staleBeforeUtc, string operatorId, string reason)
     {
         if (sessionId == Guid.Empty)
         {
-            throw new ArgumentException("SessionId is required.", nameof(sessionId));
+            return new OpenRecoveryCaseResult(false, null, "SessionId is required.");
         }
 
         if (string.IsNullOrWhiteSpace(operatorId))
         {
-            throw new ArgumentException("OperatorId is required.", nameof(operatorId));
+            return new OpenRecoveryCaseResult(false, null, "OperatorId is required.");
         }
 
         if (string.IsNullOrWhiteSpace(reason))
         {
-            throw new ArgumentException("Reason is required.", nameof(reason));
+            return new OpenRecoveryCaseResult(false, null, "Reason is required.");
         }
 
         var session = _sessionModule.GetSession(sessionId);
         if (session == null)
         {
-            throw new InvalidOperationException("Session not found.");
+            return new OpenRecoveryCaseResult(false, null, "Session not found.");
         }
 
         if (session.Status != "Active")
         {
-            throw new InvalidOperationException("Recovery case can only be opened for an active session.");
+            return new OpenRecoveryCaseResult(false, null, "Recovery case can only be opened for an active session.");
         }
 
         if (session.LastEventAtUtc > staleBeforeUtc)
         {
-            throw new InvalidOperationException("Recovery case can only be opened for a stale active session.");
+            return new OpenRecoveryCaseResult(false, null, "Recovery case can only be opened for a stale active session.");
         }
 
         // Check if a case already exists for this session (idempotent)
@@ -75,18 +75,18 @@ public class OperationsModule
         {
             if (existingCase!.Status is RecoveryCaseStatus.Resolved or RecoveryCaseStatus.Abandoned)
             {
-                throw new InvalidOperationException("Recovery case is already terminal.");
+                return new OpenRecoveryCaseResult(false, null, "Recovery case is already terminal.");
             }
 
             existingCase.RecordAction("OpenRecoveryCaseDuplicate", operatorId, reason);
             _recoveryStore.Save(existingCase);
-            return existingCase!;
+            return new OpenRecoveryCaseResult(true, existingCase!, null);
         }
 
         // Create new recovery case
         var recoveryCase = new RecoveryCase(Guid.NewGuid(), sessionId, operatorId, reason);
         _recoveryStore.Save(recoveryCase);
-        return recoveryCase;
+        return new OpenRecoveryCaseResult(true, recoveryCase, null);
     }
 
     /// <summary>
@@ -183,6 +183,14 @@ public class OperationsModule
 /// </summary>
 public sealed record ManualEndSessionRecoveryResult(
     bool Success,
+    string? Error);
+
+/// <summary>
+/// Result of opening a recovery case.
+/// </summary>
+public sealed record OpenRecoveryCaseResult(
+    bool Success,
+    RecoveryCase? RecoveryCase,
     string? Error);
 
 /// <summary>
