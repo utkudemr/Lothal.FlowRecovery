@@ -263,7 +263,7 @@ Phase 2 constraints:
 ---
 
 ### TASK-013: Expose open recovery case endpoint
-**Status:** todo
+**Status:** done
 **Goal:** Add an endpoint to open a recovery case for a stale active session.
 **Acceptance Criteria:**
 - Endpoint accepts `sessionId`, `operatorId`, `reason`, and a stale cutoff or duration
@@ -347,9 +347,9 @@ Phase 2 constraints:
 
 ## Backlog Status Summary
 - **Total Items:** 16
-- **Todo:** 4
+- **Todo:** 3
 - **In-Progress:** 0
-- **Done:** 12
+- **Done:** 13
 
 ## Next Planned Stage
 - Phase 1 MVP is complete for the current in-memory Operations implementation

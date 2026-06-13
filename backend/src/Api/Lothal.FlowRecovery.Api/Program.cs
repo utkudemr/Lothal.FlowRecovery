@@ -13,11 +13,15 @@ app.MapGet(
     "/operations/recovery-candidates",
     (DateTime? staleBeforeUtc, double? staleForMinutes, OperationsModule operationsModule) =>
     {
-        if (!TryResolveStaleBeforeUtc(staleBeforeUtc, staleForMinutes, out var resolvedStaleBeforeUtc, out var error))
+        var staleFor = staleForMinutes.HasValue
+            ? TimeSpan.FromMinutes(staleForMinutes.Value)
+            : (TimeSpan?)null;
+
+        if (!TryResolveStaleBeforeUtc(staleBeforeUtc, staleFor, out var resolvedStaleBeforeUtc, out var error))
         {
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {
-                ["staleBeforeUtc"] = new[] { error! },
+                ["staleBoundary"] = new[] { error! },
             });
         }
 
@@ -28,38 +32,59 @@ app.MapGet(
         return Results.Ok(response);
     });
 
+app.MapPost(
+    "/operations/recovery-cases",
+    (OpenRecoveryCaseRequest request, OperationsModule operationsModule) =>
+    {
+        if (!TryResolveStaleBeforeUtc(request.StaleBeforeUtc, request.StaleFor, out var resolvedStaleBeforeUtc, out var error))
+        {
+            return Results.BadRequest(new OpenRecoveryCaseResponse(false, null, error));
+        }
+
+        var result = operationsModule.OpenRecoveryCase(
+            request.SessionId,
+            resolvedStaleBeforeUtc,
+            request.OperatorId,
+            request.Reason);
+
+        var response = result.ToResponse();
+        return result.Success
+            ? Results.Ok(response)
+            : Results.BadRequest(response);
+    });
+
 app.Run();
 
 return;
 
 static bool TryResolveStaleBeforeUtc(
     DateTime? staleBeforeUtc,
-    double? staleForMinutes,
+    TimeSpan? staleFor,
     out DateTime resolvedStaleBeforeUtc,
     out string? error)
 {
     var hasStaleBeforeUtc = staleBeforeUtc.HasValue;
-    var hasStaleForMinutes = staleForMinutes.HasValue;
+    var hasStaleFor = staleFor.HasValue;
 
-    if (hasStaleBeforeUtc == hasStaleForMinutes)
+    if (hasStaleBeforeUtc == hasStaleFor)
     {
         resolvedStaleBeforeUtc = default;
-        error = "Provide exactly one of staleBeforeUtc or staleForMinutes.";
+        error = "Provide exactly one of staleBeforeUtc or staleFor.";
         return false;
     }
 
-    if (hasStaleForMinutes)
+    if (hasStaleFor)
     {
-        var staleForMinutesValue = staleForMinutes.GetValueOrDefault();
+        var staleForValue = staleFor.GetValueOrDefault();
 
-        if (staleForMinutesValue <= 0)
+        if (staleForValue <= TimeSpan.Zero)
         {
             resolvedStaleBeforeUtc = default;
-            error = "staleForMinutes must be greater than zero.";
+            error = "staleFor must be greater than zero.";
             return false;
         }
 
-        resolvedStaleBeforeUtc = DateTime.UtcNow.AddMinutes(-staleForMinutesValue);
+        resolvedStaleBeforeUtc = DateTime.UtcNow.Subtract(staleForValue);
         error = null;
         return true;
     }
