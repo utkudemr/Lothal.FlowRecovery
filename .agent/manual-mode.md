@@ -4,6 +4,13 @@
 Use this mode when you want to give the agent one specific task and have it implement just that task.
 The agent will NOT automatically continue to the next backlog item.
 
+## Codex Model Selection
+
+- Prefer Codex's default model when using ChatGPT sign-in.
+- Do not hardcode Codex model names in repository workflow files.
+- If a model override is needed, choose a model supported by the current Codex authentication mode.
+- ChatGPT sign-in and API key sign-in may expose different model availability.
+
 ## When to Use Manual Mode
 - You have a specific, focused request
 - You want to review the result before the next task

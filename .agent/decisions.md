@@ -47,6 +47,15 @@ Decisions are categorized by domain and include rationale.
 
 ## MVP-Phase Decisions
 
+### Decision: Do Not Hardcode Codex Model Names in Workflow Files
+**Proposed:** Repository workflow files should avoid hardcoded Codex model names and prefer the default Codex model unless the user explicitly selects a supported override.
+**Rationale:**
+- ChatGPT sign-in and API key sign-in may expose different model availability
+- Hardcoded Codex-only model names can fail for agents using ChatGPT sign-in
+- Workflow documentation should remain portable across supported Codex authentication modes
+
+**Status:** Accepted
+
 ### Decision: Operations Module Coordination Role
 **Proposed:** Operations module coordinates manual recovery workflows.  
 **Rationale:** 

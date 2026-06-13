@@ -4,6 +4,13 @@
 Use this mode to process the backlog automatically from start to finish.
 The agent reads tasks, implements them one by one, validates, commits, and continues until done or a stop condition occurs.
 
+## Codex Model Selection
+
+- Prefer Codex's default model when using ChatGPT sign-in.
+- Do not hardcode Codex model names in repository workflow files.
+- If a model override is needed, choose a model supported by the current Codex authentication mode.
+- ChatGPT sign-in and API key sign-in may expose different model availability.
+
 ## When to Use Autonomous Mode
 - You want the agent to work through multiple backlog items
 - The first task has been validated and the direction is clear

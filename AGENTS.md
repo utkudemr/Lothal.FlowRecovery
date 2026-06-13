@@ -298,6 +298,13 @@ Do not write:
 Use `docs/agent-workflow/DONE_CONTRACT.md` as the completion checklist for small tasks.
 Use `docs/agent-workflow/PRESETS.md` for reusable workflow presets.
 
+## Codex Model Selection
+
+When using Codex with ChatGPT sign-in, prefer Codex's default model.
+Do not hardcode Codex model names in repository workflow files.
+If a model override is needed, the user should choose a model supported by their current Codex authentication mode.
+ChatGPT sign-in and API key sign-in may expose different model availability.
+
 ---
 
 ## Development Workflows
