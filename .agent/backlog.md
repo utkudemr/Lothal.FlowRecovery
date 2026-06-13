@@ -223,7 +223,7 @@ Phase 2 constraints:
 ## Phase 2 Backlog Items
 
 ### TASK-011: Add Operations API contracts
-**Status:** todo
+**Status:** done
 **Goal:** Define request/response contracts for the recovery API without implementing endpoints yet.
 **Acceptance Criteria:**
 - Request and response DTOs exist for listing recovery candidates
@@ -347,9 +347,9 @@ Phase 2 constraints:
 
 ## Backlog Status Summary
 - **Total Items:** 16
-- **Todo:** 6
+- **Todo:** 5
 - **In-Progress:** 0
-- **Done:** 10
+- **Done:** 11
 
 ## Next Planned Stage
 - Phase 1 MVP is complete for the current in-memory Operations implementation

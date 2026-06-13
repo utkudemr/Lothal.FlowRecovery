@@ -6,12 +6,13 @@
 - Operations MVP is accepted for the current in-memory phase
 - Phase 1 backlog is complete
 - Final validation passed: `dotnet restore`, `dotnet build`, and `dotnet test`
-- Current verified test total is 208 passing tests: Session 83, Workflow 61, Realtime 26, Operations 38
+- Current verified test total is 212 passing tests: Session 83, Workflow 61, Realtime 26, Operations 42
 - Manual Task Mode and Autonomous Backlog Mode are both usable with the current bookkeeping state
 
 ### Phase 2 Plan
 - Phase 2 is planned and focuses on a thin Operations API surface
-- The next stage should add API contracts, recovery endpoints, and usage documentation
+- Phase 2 is now started with Operations API contracts in place
+- The next stage should add recovery endpoints and usage documentation on top of those contracts
 - Persistence, authentication, UI, and new recovery actions remain out of scope for Phase 2
 
 ### Modules Implemented
@@ -49,6 +50,7 @@
    - Avoids duplicate SessionEnded events on repeated manual recovery
    - Rejects normal recovery actions on resolved or abandoned cases while allowing explicit idempotent audit records
    - Documents the current audit trail contract in `docs/AUDIT_TRAIL.md`
+   - Provides API-safe request and response contracts for planned external recovery access
    - Fully tested for current in-memory MVP behavior
 
 ### Modules Planned (Not Yet Implemented)
@@ -129,17 +131,17 @@ Inferred from solution structure; check Directory.Build.props for exact target f
 ## Build & Test Status
 - **Build Command:** `dotnet build` from backend/
 - **Test Command:** `dotnet test` from backend/
-- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed in the final MVP verification pass; latest observed suite total was 208 passing tests.
+- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed after Phase 2 API contract work; latest observed suite total was 212 passing tests.
 
 ## Next Phase
 See `.agent/backlog.md` for detailed task list.
 
 Current planning status:
 - Phase 1 MVP backlog is complete for the current in-memory phase
-- Phase 2 backlog is planned for the Operations API surface
+- Phase 2 backlog is underway for the Operations API surface
 
 ## Next Recommended Feature Area
-- Thin Operations API contracts and endpoints for operator-driven recovery workflows
+- Thin Operations endpoints for operator-driven recovery workflows
 - Persistence and durability for sessions, recovery cases, and audit history after the API slice is in place
 - Authentication and authorization for operator actions in a later phase
 - UI/operator console once durable backend contracts exist

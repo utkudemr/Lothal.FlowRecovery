@@ -66,6 +66,12 @@ Each completed task includes a summary, validation status, and commit reference.
 **Summary:** Ran the final MVP validation pass across Session, Workflow, Realtime, and Operations and recorded the verified repository state for future manual and autonomous agent work.
 **Validation:** Documentation review completed; `dotnet restore`, `dotnet build`, and `dotnet test` passed with 208 tests total: Session 83, Workflow 61, Realtime 26, Operations 38.
 
+### TASK-011: Add Operations API contracts
+**Status:** Done
+**Commit:** `feat: add operations API contracts`
+**Summary:** Added API request/response contracts and projection helpers for recovery candidates, opening recovery cases, manual end-session recovery, and recovery case detail without exposing mutable domain objects directly.
+**Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed with 212 tests total: Session 83, Workflow 61, Realtime 26, Operations 42.
+
 ## Additional Completed Hardening
 
 ### OPS-HARDENING-001: Operations boundary validation
@@ -114,7 +120,7 @@ Each completed task entry includes:
 ---
 
 ## Backlog Progress
-- Total backlog items: 10
-- Completed: 10
+- Total backlog items: 16
+- Completed: 11
 - In-progress: 0
-- Todo: 0
+- Todo: 5
