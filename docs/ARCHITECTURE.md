@@ -35,6 +35,12 @@ Session, Workflow, and Realtime are implemented today; Workflow currently expose
 - module coupling should stay minimal
 - write-side and read-side concerns should remain separable
 
+## Audit Trail
+- Operations audit requirements are documented in `docs/AUDIT_TRAIL.md`
+- Recovery actions require operator identity and reason at the Operations boundary
+- Recovery case audit events are append-only in intent, even though current storage is in-memory
+- Duplicate or repeated recovery attempts should be audited without duplicating business state events such as `SessionEndedEvent`
+
 ## Current Limits
 - in-memory only
 - single-process only

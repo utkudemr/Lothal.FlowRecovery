@@ -59,6 +59,8 @@ The system treats key workflow changes as recorded events rather than opaque sta
 
 Operator interventions should remain explicit and auditable.
 
+See [Audit Trail](docs/AUDIT_TRAIL.md) for the current Operations recovery audit contract.
+
 ## Current Technical State
 
 This repository is still in an early technical stage:

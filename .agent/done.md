@@ -48,6 +48,12 @@ Each completed task includes a summary, validation status, and commit reference.
 **Summary:** Operations is included in the solution, integrates with Session, and has a dedicated test project.
 **Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed with Session, Workflow, Realtime, and Operations tests.
 
+### TASK-008: Add audit trail documentation
+**Status:** Done
+**Commit:** `docs: add audit trail documentation`
+**Summary:** Added `docs/AUDIT_TRAIL.md`, linked it from README and architecture docs, and documented operator-driven recovery audit behavior, duplicate-open audit behavior, manual end-session recovery auditing, idempotent repeated attempts, lifecycle events, and in-memory audit limitations.
+**Validation:** Documentation review completed; `dotnet restore`, `dotnet build`, and `dotnet test` passed with 208 tests.
+
 ## Additional Completed Hardening
 
 ### OPS-HARDENING-001: Operations boundary validation
@@ -97,6 +103,6 @@ Each completed task entry includes:
 
 ## Backlog Progress
 - Total backlog items: 10
-- Completed: 7
+- Completed: 8
 - In-progress: 0
-- Todo: 3
+- Todo: 2

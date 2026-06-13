@@ -35,6 +35,7 @@
    - Makes repeated manual EndSession recovery idempotent and audited
    - Avoids duplicate SessionEnded events on repeated manual recovery
    - Rejects normal recovery actions on resolved or abandoned cases while allowing explicit idempotent audit records
+   - Documents the current audit trail contract in `docs/AUDIT_TRAIL.md`
    - Fully tested for current in-memory MVP behavior
 
 ### Modules Planned (Not Yet Implemented)
@@ -70,12 +71,11 @@
 - Persistence for sessions and recovery cases is not implemented yet
 - Operator authentication and authorization are not implemented yet
 - API layer for operator workflows is not implemented yet
-- Audit trail documentation is not formalized in `docs/AUDIT_TRAIL.md`
 - Operations boundary error handling is mixed and tracked for normalization in `.agent/backlog.md`
 
 ### Documentation Gaps
 - No dedicated Operations module README yet
-- No audit trail design document yet
+- Audit trail documentation exists in `docs/AUDIT_TRAIL.md`
 - Agent bookkeeping was reconciled after the Operations multi-commit batch
 
 ## Design Decisions (From decisions.md)
@@ -115,11 +115,11 @@ Inferred from solution structure; check Directory.Build.props for exact target f
 ## Build & Test Status
 - **Build Command:** `dotnet build` from backend/
 - **Test Command:** `dotnet test` from backend/
-- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed during Operations hardening; latest observed suite total was 208 passing tests.
+- **Last Known Validation:** `dotnet restore`, `dotnet build`, and `dotnet test` passed after audit trail documentation; latest observed suite total was 208 passing tests.
 
 ## Next Phase: MVP Completion
 See `.agent/backlog.md` for detailed task list.
 
 Remaining MVP work:
-1. Document the recovery audit trail in `docs/AUDIT_TRAIL.md`
-2. Run and record final MVP build/test verification once documentation is complete
+1. Run and record final MVP build/test verification
+2. Normalize Operations boundary error handling if selected before MVP closeout

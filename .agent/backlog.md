@@ -148,7 +148,7 @@ Operator-driven flow recovery backend with:
 ---
 
 ### TASK-008: Add audit trail documentation
-**Status:** todo  
+**Status:** done
 **Goal:** Document the audit trail for recovery operations in code and README.  
 **Acceptance Criteria:**
 - `docs/AUDIT_TRAIL.md` created describing recovery audit events
@@ -162,7 +162,7 @@ Operator-driven flow recovery backend with:
 - Example audit trail is correct and illustrative
 - References match domain model
 
-**Commit Message:** docs: add audit trail documentation for recovery operations
+**Commit Message:** docs: add audit trail documentation
 
 ---
 
@@ -207,9 +207,9 @@ Operator-driven flow recovery backend with:
 
 ## Backlog Status Summary
 - **Total Items:** 10
-- **Todo:** 3
+- **Todo:** 2
 - **In-Progress:** 0
-- **Done:** 7
+- **Done:** 8
 
 ## Next Steps After MVP
 - Persistence layer (PostgreSQL)
