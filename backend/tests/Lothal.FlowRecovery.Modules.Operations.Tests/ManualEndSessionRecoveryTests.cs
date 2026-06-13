@@ -107,7 +107,7 @@ public class ManualEndSessionRecoveryTests
     }
 
     [Fact]
-    public void ManualEndSessionRecovery_FailsWhenSessionAlreadyEnded()
+    public void ManualEndSessionRecovery_SucceedsWhenSessionAlreadyEndedAndRecordsAudit()
     {
         // Arrange
         var sessionModule = new SessionModule();
@@ -125,12 +125,26 @@ public class ManualEndSessionRecoveryTests
         var result = operationsModule.ManualEndSessionRecovery(recoveryCase.Id, "operator-001", "Recovery attempt");
 
         // Assert
-        Assert.False(result.Success);
-        Assert.NotNull(result.Error);
+        Assert.True(result.Success);
+        Assert.Null(result.Error);
+
+        var session = sessionModule.GetSession(sessionId);
+        Assert.NotNull(session);
+        Assert.Equal("Ended", session.Status);
+        Assert.Single(session.Events.OfType<SessionEndedEvent>());
+        Assert.Single(session.Events.OfType<SessionEndAlreadyEndedAuditEvent>());
+
+        var updatedCase = operationsModule.GetRecoveryCase(recoveryCase.Id);
+        Assert.NotNull(updatedCase);
+        Assert.Equal(RecoveryCaseStatus.Resolved, updatedCase.Status);
+        var actionEvent = Assert.Single(updatedCase.Events.OfType<RecoveryActionRecorded>());
+        Assert.Equal("EndSessionAlreadyEnded", actionEvent.ActionName);
+        Assert.Equal("operator-001", actionEvent.OperatorId);
+        Assert.Equal("Recovery attempt", actionEvent.Reason);
     }
 
     [Fact]
-    public void ManualEndSessionRecovery_IsIdempotent()
+    public void ManualEndSessionRecovery_IsIdempotentAndAuditsRepeatedAttempt()
     {
         // Arrange
         var sessionModule = new SessionModule();
@@ -147,16 +161,29 @@ public class ManualEndSessionRecoveryTests
         var firstResult = operationsModule.ManualEndSessionRecovery(recoveryCase.Id, "operator-001", "First attempt");
         var secondResult = operationsModule.ManualEndSessionRecovery(recoveryCase.Id, "operator-002", "Second attempt");
 
-        // Assert - First succeeds, second fails because the recovery case is terminal.
+        // Assert - Both attempts succeed; the second records an idempotent audit instead of ending again.
         Assert.True(firstResult.Success);
-        Assert.False(secondResult.Success);
-        Assert.Equal("Recovery case is already terminal.", secondResult.Error);
+        Assert.True(secondResult.Success);
+        Assert.Null(secondResult.Error);
 
-        // Verify session is ended only once
         var session = sessionModule.GetSession(sessionId);
         Assert.NotNull(session);
         Assert.Equal("Ended", session.Status);
         Assert.NotNull(session.EndedAtUtc);
+        Assert.Single(session.Events.OfType<SessionEndedEvent>());
+        Assert.Single(session.Events.OfType<SessionEndAlreadyEndedAuditEvent>());
+
+        var updatedCase = operationsModule.GetRecoveryCase(recoveryCase.Id);
+        Assert.NotNull(updatedCase);
+        Assert.Equal(RecoveryCaseStatus.Resolved, updatedCase.Status);
+        var actionEvents = updatedCase.Events.OfType<RecoveryActionRecorded>().ToArray();
+        Assert.Equal(2, actionEvents.Length);
+        Assert.Equal("EndSession", actionEvents[0].ActionName);
+        Assert.Equal("operator-001", actionEvents[0].OperatorId);
+        Assert.Equal("First attempt", actionEvents[0].Reason);
+        Assert.Equal("EndSessionAlreadyEnded", actionEvents[1].ActionName);
+        Assert.Equal("operator-002", actionEvents[1].OperatorId);
+        Assert.Equal("Second attempt", actionEvents[1].Reason);
     }
 
     [Fact]

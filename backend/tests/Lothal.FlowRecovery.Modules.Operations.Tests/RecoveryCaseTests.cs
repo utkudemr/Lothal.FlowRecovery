@@ -135,7 +135,7 @@ public class RecoveryCaseTests
     }
 
     [Fact]
-    public void RecordAction_RejectsTerminalRecoveryCase()
+    public void RecordAction_AllowsResolvedRecoveryCaseAudit()
     {
         // Arrange
         var recoveryCase = new RecoveryCase(Guid.NewGuid(), Guid.NewGuid(), "op-001", "Initial");
@@ -143,12 +143,14 @@ public class RecoveryCaseTests
         recoveryCase.ChangeStatus(RecoveryCaseStatus.Resolved, "op-002", "Recovery complete");
 
         // Act
-        var exception = Assert.Throws<InvalidOperationException>(
-            () => recoveryCase.RecordAction("EndSession", "op-003", "Retry"));
+        recoveryCase.RecordAction("EndSessionAlreadyEnded", "op-003", "Retry");
 
         // Assert
-        Assert.Equal("Recovery action cannot be recorded on a terminal recovery case.", exception.Message);
-        Assert.Equal(3, recoveryCase.Events.Count);
+        Assert.Equal(4, recoveryCase.Events.Count);
+        var actionEvent = Assert.IsType<RecoveryActionRecorded>(recoveryCase.Events[3]);
+        Assert.Equal("EndSessionAlreadyEnded", actionEvent.ActionName);
+        Assert.Equal("op-003", actionEvent.OperatorId);
+        Assert.Equal("Retry", actionEvent.Reason);
     }
 
     [Fact]

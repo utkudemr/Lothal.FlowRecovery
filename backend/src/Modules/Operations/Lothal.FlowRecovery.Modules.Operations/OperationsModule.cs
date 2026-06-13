@@ -135,16 +135,31 @@ public class OperationsModule
             return new ManualEndSessionRecoveryResult(false, "Recovery case not found");
         }
 
-        if (recoveryCase.Status is RecoveryCaseStatus.Resolved or RecoveryCaseStatus.Abandoned)
+        if (recoveryCase.Status == RecoveryCaseStatus.Abandoned)
         {
             return new ManualEndSessionRecoveryResult(false, "Recovery case is already terminal.");
         }
 
-        recoveryCase.ChangeStatus(RecoveryCaseStatus.InProgress, operatorId, reason);
-        _recoveryStore.Save(recoveryCase);
+        if (recoveryCase.Status == RecoveryCaseStatus.New)
+        {
+            recoveryCase.ChangeStatus(RecoveryCaseStatus.InProgress, operatorId, reason);
+            _recoveryStore.Save(recoveryCase);
+        }
 
         // End the session via Session module with operator metadata
         var endResult = _sessionModule.EndSession(new EndSessionCommand(recoveryCase.SessionId, operatorId, "Operator", reason));
+        if (endResult.Outcome == EndSessionOutcome.AlreadyEnded)
+        {
+            recoveryCase.RecordAction("EndSessionAlreadyEnded", operatorId, reason);
+            if (recoveryCase.Status == RecoveryCaseStatus.InProgress)
+            {
+                recoveryCase.ChangeStatus(RecoveryCaseStatus.Resolved, operatorId, reason);
+            }
+
+            _recoveryStore.Save(recoveryCase);
+            return new ManualEndSessionRecoveryResult(true, null);
+        }
+
         if (!endResult.Success)
         {
             return new ManualEndSessionRecoveryResult(false, endResult.Error ?? "Failed to end session");
@@ -152,7 +167,11 @@ public class OperationsModule
 
         // Record the action in the recovery case
         recoveryCase.RecordAction("EndSession", operatorId, reason);
-        recoveryCase.ChangeStatus(RecoveryCaseStatus.Resolved, operatorId, reason);
+        if (recoveryCase.Status == RecoveryCaseStatus.InProgress)
+        {
+            recoveryCase.ChangeStatus(RecoveryCaseStatus.Resolved, operatorId, reason);
+        }
+
         _recoveryStore.Save(recoveryCase);
 
         return new ManualEndSessionRecoveryResult(true, null);

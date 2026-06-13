@@ -73,7 +73,7 @@ public class RecoveryCase
             throw new ArgumentException("ActionName is required.", nameof(actionName));
         }
 
-        if (Status is RecoveryCaseStatus.Resolved or RecoveryCaseStatus.Abandoned)
+        if (Status == RecoveryCaseStatus.Abandoned)
         {
             throw new InvalidOperationException("Recovery action cannot be recorded on a terminal recovery case.");
         }
